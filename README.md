@@ -14,6 +14,8 @@ Company Sync is a Frappe application designed to synchronize data between differ
 -   **Entity Relationship Handling:** Manages relationships between different entities, ensuring that related records are synchronized correctly.
 -   **Customizable and Extensible:** Designed with customization in mind, allowing developers to extend the application to support additional entities and synchronization scenarios.
 
+![Company Sync Application](image.png)
+
 ## Architecture
 
 The application is structured into several key components:
