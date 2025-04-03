@@ -1,0 +1,141 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{company}/{broker} Sync on {creation}",
+ "beta": 1,
+ "creation": "2024-11-07 14:42:40.143548",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company_data_section",
+  "company",
+  "company_file",
+  "status",
+  "column_break_ntli",
+  "broker",
+  "sync_on",
+  "section_sync_preview",
+  "sync_preview",
+  "section_sync_log_preview",
+  "column_break_psyl",
+  "sync_log"
+ ],
+ "fields": [
+  {
+   "fieldname": "company_data_section",
+   "fieldtype": "Section Break",
+   "label": "Company Data"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Pending\nSuccess\nPartial Success\nError\nTimed Out",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ntli",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sync_on",
+   "fieldtype": "Data",
+   "label": "Sync on",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_sync_preview",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Preview"
+  },
+  {
+   "fieldname": "sync_preview",
+   "fieldtype": "HTML",
+   "label": "Sync Preview"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Oscar\nAmbetter\nAetna\nMolina",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "broker",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Broker",
+   "options": "BS\nADC",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "company_file",
+   "fieldtype": "Attach",
+   "label": "Company File",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_sync_log_preview",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Sync Log"
+  },
+  {
+   "fieldname": "sync_log",
+   "fieldtype": "Table",
+   "label": "Sync Log",
+   "options": "Company Sync Log",
+   "width": "100"
+  },
+  {
+   "fieldname": "column_break_psyl",
+   "fieldtype": "Column Break",
+   "width": "100"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-03-03 14:51:25.737442",
+ "modified_by": "Administrator",
+ "module": "Company Sync",
+ "name": "Company Sync Scheduler",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Syncer User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,30 @@
+[project]
+name = "company_sync"
+authors = [
+    { name = "Dante Devenir", email = "dantedevenir@outlook.com"}
+]
+description = "Company Sync in VTigerCRM"
+requires-python = ">=3.10"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+    # "frappe~=15.0.0" # Installed and managed by bench.
+    "numpy ~= 1.25.2",
+    "pandas ~= 2.2.2",
+    "python-dateutil ~= 2.9.0.post0",
+    "pytz ~= 2024.1",
+    "six ~= 1.16.0",
+    "tqdm ~= 4.66.4",
+    "tzdata ~= 2024.1",
+    "python-dotenv ~= 1.0.1",
+    "sqlalchemy ~= 2.0.37",
+    "pymysql ~= 1.1.1"
+]
+
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+# These dependencies are only installed when developer mode is enabled
+[tool.bench.dev-dependencies]
+# package_name = "~=1.1.0"

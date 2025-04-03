@@ -1,0 +1,158 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-update:
+    runs-on: ubuntu-24.04
+    environment: Develop
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Print username
+        run: 'echo "Registry username: ${{ secrets.REGISTRY_USERNAME }}"'
+          
+      # Paso 1: Clonar frappe_docker
+      - name: Checkout frappe_docker
+        uses: actions/checkout@v2
+        with:
+          repository: frappe/frappe_docker
+          path: frappe_docker
+          depth: 0
+      # Paso 2: Configurar Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Paso 3: Login en el registry Docker
+      - name: Login to Docker registry
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Calculate Image Tag
+        id: tag
+        run: |
+          # Obtener el último tag (se asume formato MAJOR.MINOR.PATCH.REVISION)
+          LAST_TAG=$(git describe --tags --abbrev=0 || echo "0.0.0")
+          echo "Último tag: $LAST_TAG"
+          
+          # Separar las partes del tag en variables
+          IFS='.' read -r MAJOR MINOR PATCH REVISION <<< "$LAST_TAG"
+          
+          # Obtener el mensaje del último commit
+          LAST_COMMIT_MSG=$(git log -1 --pretty=%s)
+          echo "Mensaje del último commit: $LAST_COMMIT_MSG"
+          
+          # Lógica para actualizar la versión según el tipo de commit:
+          # • MAJOR: Se incrementa si el commit contiene "BREAKING CHANGE".
+          # • MINOR: Se incrementa para commits de tipo "feat:".
+          # • PATCH: Se incrementa para commits de tipo "fix:" o "hot:".
+          # • REVISION: Se incrementa para commits de tipo "refactor:", "docs:", "chore:", "test:" o "ci:".
+          if [[ "$LAST_COMMIT_MSG" == *"BREAKING CHANGE"* ]]; then
+            echo "Commit con BREAKING CHANGE -> Incrementando MAJOR"
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+            REVISION=0
+          elif [[ $LAST_COMMIT_MSG == feat:* ]]; then
+            echo "Commit de tipo feat: -> Incrementando MINOR"
+            MINOR=$((MINOR + 1))
+            PATCH=0
+            REVISION=0
+          elif [[ $LAST_COMMIT_MSG == fix:* || $LAST_COMMIT_MSG == hot:* ]]; then
+            echo "Commit de tipo fix: u hot: -> Incrementando PATCH"
+            PATCH=$((PATCH + 1))
+            REVISION=0
+          elif [[ $LAST_COMMIT_MSG == refactor:* || $LAST_COMMIT_MSG == docs:* || $LAST_COMMIT_MSG == chore:* || $LAST_COMMIT_MSG == test:* || $LAST_COMMIT_MSG == ci:* ]]; then
+            echo "Commit de tipo refactor:, docs:, chore:, test: o ci: -> Incrementando REVISION"
+            REVISION=$((REVISION + 1))
+          else
+            echo "No se detectó un prefijo reconocido, manteniendo versión actual"
+          fi
+          
+          # Construir el nuevo tag
+          FULL_TAG="${MAJOR}.${MINOR}.${PATCH}.${REVISION}"
+          
+           # Exportar la variable para los siguientes steps
+          echo "FULL_TAG=$FULL_TAG" >> $GITHUB_ENV
+          echo "Nuevo tag calculado: $FULL_TAG"
+          
+          # Configurar la identidad de Git
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          
+          # Crear el tag anotado
+          git tag -a "$FULL_TAG" -m "Release $FULL_TAG"
+          
+          # Configurar el URL remoto usando el token para autenticarse
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+
+          echo "Actualizando company_sync/__init__.py con la versión $FULL_TAG"
+          sed -i 's/^__version__ = ".*"$/__version__ = "'${FULL_TAG}'"/' company_sync/__init__.py
+          cat company_sync/__init__.py
+          git add company_sync/__init__.py
+          git commit -m "Update __version__ in __init__.py to $FULL_TAG [skip ci]" || echo "No changes to commit"
+          git push origin ${{ github.ref }}
+          
+          # Empujar el nuevo tag al repositorio remoto
+          git push origin "$FULL_TAG"
+
+      - name: Build and Push Docker Image
+        env:
+          APPS_JSON_BASE64: ${{ secrets.APPS_JSON_BASE64 }}
+        run: |
+          # Verificar que tenemos el valor
+          echo "Apps JSON length: ${#APPS_JSON_BASE64}"
+          
+          # Hacer el build usando la variable de ambiente
+          docker build \
+            --build-arg FRAPPE_PATH=https://github.com/frappe/frappe \
+            --build-arg FRAPPE_BRANCH=version-15 \
+            --build-arg APPS_JSON_BASE64="${APPS_JSON_BASE64}" \
+            --tag docker.io/mabecenter/erpnext:${{ env.FULL_TAG }} \
+            --file frappe_docker/images/layered/Containerfile .
+          
+          # Push de la imagen
+          docker push docker.io/mabecenter/erpnext:${{ env.FULL_TAG }}
+
+      # Paso 6: Clonar el repositorio de infra/helm
+      - name: Checkout Infra Repo
+        uses: actions/checkout@v2
+        with:
+          repository: mabecenter-it/argocd-app
+          path: argocd-app
+          ref: company_sync
+          token: ${{ secrets.GH_PAT }}
+      
+      # Paso 7: Actualizar solo los valores necesarios en el archivo existente
+      - name: Update values in infra Repo
+        run: |
+          # Actualizar solo el tag en el archivo existente
+          sed -i "s|^\(\s*image:\s*mabecenter/erpnext:\).*|\1${FULL_TAG}|" argocd-app/latest/compose.yaml
+
+      # Paso 8: Commit y push del nuevo archivo
+      - name: Commit and Push Changes
+        run: |
+          cd argocd-app
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Configurar el token directamente en la URL
+          git remote set-url origin "https://${{ secrets.GH_PAT }}@github.com/mabecenter-it/argocd-app.git"
+          git add latest/compose.yaml
+          git commit -m "Update Docker image to ${{ env.FULL_TAG }}"
+          git push origin company_sync
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+
+permissions:
+  contents: write
+  packages: write
