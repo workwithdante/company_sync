@@ -11,7 +11,7 @@ def before_install():
 	#save_config_vtigercrm()
 	pass
 
-def after_install():
+def after_install(app_name=None):
 	#save_config_vtigercrm()
 	#create_default_role_profiles()
 	create_custom_role()
