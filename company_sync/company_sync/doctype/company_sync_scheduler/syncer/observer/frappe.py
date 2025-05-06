@@ -2,16 +2,17 @@ import frappe
 from .base import ProgressObserver
 
 class FrappeProgressObserver(ProgressObserver):
-    def update(self, percentage: float, context: dict, event = 'company_sync_refresh'):
+    def update(self, percentage: float, vtigercrm_sync: str, context: dict, event = 'vtigercrm_sync_refresh'):
         frappe.publish_realtime(
             event,
             {
                 'percentage': f"{percentage * 100:.2f}",
+                'vtigercrm_sync': vtigercrm_sync,
             },
             docname=context['doc_name'],
         )
     
-    def updateError(self, error_log: str, context: dict, event = 'company_sync_error_log'):
+    def updateError(self, error_log: str, context: dict, event = 'vtigercrm_sync_error_log'):
         frappe.publish_realtime(
             event,
             {
@@ -20,7 +21,7 @@ class FrappeProgressObserver(ProgressObserver):
             docname=context['doc_name'],
         )
     
-    def updateLog(self, context: dict, event = 'company_sync_error_log'):
+    def updateLog(self, context: dict, event = 'vtigercrm_sync_error_log'):
         frappe.publish_realtime(
             event,
             {
@@ -33,7 +34,7 @@ class FrappeProgressObserver(ProgressObserver):
         )
     
     
-    def updateSuccess(self, context: dict, event = 'company_sync_success'):
+    def updateSuccess(self, context: dict, event = 'vtigercrm_sync_success'):
         frappe.publish_realtime(
             event,
             {
