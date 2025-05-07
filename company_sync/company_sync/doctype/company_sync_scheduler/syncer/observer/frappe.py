@@ -10,6 +10,7 @@ class FrappeProgressObserver(ProgressObserver):
                 'vtigercrm_sync': vtigercrm_sync,
             },
             docname=context['doc_name'],
+            after_commit=True,
         )
     
     def updateError(self, error_log: str, context: dict, event = 'vtigercrm_sync_error_log'):
