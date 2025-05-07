@@ -9,7 +9,7 @@ def validate_contact(doc, method):
     filters = {
         "first_name": doc.first_name,
         "last_name": doc.last_name,
-        "custom_day_of_birth": doc.custom_day_of_birth
+        "custom_date_of_birth": doc.custom_date_of_birth
     }
 
     # Excluir el registro actual en caso de edición
@@ -22,7 +22,7 @@ def validate_contact(doc, method):
 
     if existing_contact:
         message = _("A contact with the same name and dob already exists")
-    if doc.custom_day_of_birth and getdate(doc.custom_day_of_birth) > getdate(nowdate()):
+    if doc.custom_date_of_birth and getdate(doc.custom_date_of_birth) > getdate(nowdate()):
         message = _("DOB is not possible in the future")
 
     if message:

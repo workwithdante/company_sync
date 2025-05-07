@@ -38,17 +38,17 @@
         "owner": {
             "first_name": "cf_2293",
             "last_name": "cf_2297",
-            "custom_day_of_birth": "cf_2299"
+            "custom_date_of_birth": "cf_2299"
         },
         "spouse": {
             "first_name": "cf_2347",
             "last_name": "cf_2351",
-            "custom_day_of_birth": "cf_2355"
+            "custom_date_of_birth": "cf_2355"
         },
         "dependent_1": {
             "first_name": "cf_2405",
             "last_name": "cf_2409",
-            "custom_day_of_birth": "cf_2413"
+            "custom_date_of_birth": "cf_2413"
         }
     }
 }
