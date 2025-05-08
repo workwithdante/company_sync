@@ -9,6 +9,7 @@ class FrappeProgressObserver(ProgressObserver):
                 'percentage': f"{percentage * 100:.2f}",
                 'vtigercrm_sync': vtigercrm_sync,
             },
+            doctype="VTigerCRM Sync",
             docname=context['doc_name'],
             after_commit=True,
         )
@@ -19,6 +20,7 @@ class FrappeProgressObserver(ProgressObserver):
             {
                 'error_log': error_log,
             },
+            doctype="VTigerCRM Sync",
             docname=context['doc_name'],
         )
     
@@ -31,6 +33,7 @@ class FrappeProgressObserver(ProgressObserver):
                 'company': context['company'],
                 'broker': context['broker']
             },
+            doctype="VTigerCRM Sync",
             docname=context['doc_name'],
         )
     
@@ -41,6 +44,7 @@ class FrappeProgressObserver(ProgressObserver):
             {
                 'success': context['success'],
             },
+            doctype="VTigerCRM Sync",
             docname=context['doc_name'],
         )
 
