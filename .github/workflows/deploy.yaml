@@ -112,7 +112,6 @@ jobs:
         run: |
           # Verificar que tenemos el valor
           echo "Apps JSON length: ${#APPS_JSON_BASE64}"
-          echo -n ${#APPS_JSON_BASE64} | base64 -d
           
           # Hacer el build usando la variable de ambiente
           docker build \
