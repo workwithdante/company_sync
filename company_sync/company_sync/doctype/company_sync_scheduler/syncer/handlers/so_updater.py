@@ -48,9 +48,9 @@ class SOUpdater:
         status = str(row['estado'])
         salesorder_no = str(row['so_no'])
         
-        if status == 'Paid':
+        if status in ('Paid', 'Life change', 'Update'):
             self.update_sales_order(memberID, paidThroughDate, salesorder_no)
-        elif status == 'Problem':
+        elif status != 'New':
             update_logs(self.doc_name, memberID, self.company, self.broker, status)
 
     def update_orders(self):
