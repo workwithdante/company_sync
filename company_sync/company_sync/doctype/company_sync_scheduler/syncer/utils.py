@@ -113,7 +113,7 @@ def update_logs(doc_name, memberID, company, broker, error_log):
     })
     doc_parent.save()
     frappe.db.commit() 
-    progress_observer.updateLog({'message': error_log, 'doc_name': doc_parent.name, 'memberID': memberID, 'company': company, 'broker': broker})
+    progress_observer.updateLog({'message': error_log, 'doc_name': doc_parent.name, 'memberID': memberID, 'company': company, 'broker': broker, 'doctype': 'Company Sync Scheduler'}, event='company_sync_error_log')
 
 def add_business_days(start_date, business_days):
     current_date = start_date

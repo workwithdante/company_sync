@@ -1,13 +1,15 @@
 # File: company_sync/processors/csv_processor.py
+from company_sync.company_sync.doctype.company_sync_scheduler.database.engine import get_engine
 import pandas as pd
 import logging
 from company_sync.company_sync.doctype.company_sync_scheduler.syncer.utils import conditional_update
 import frappe
 
 class CSVProcessor:
-    def __init__(self, csv_path: str, strategy):
+    def __init__(self, csv_path: str, strategy, database_temp):
         self.csv_path = csv_path
         self.strategy = strategy  # Estrategia que implementa CompanyStrategy
+        self.database_temp = database_temp
         self.logger = logging.getLogger(__name__)
     
     def read_csv(self) -> pd.DataFrame:
@@ -22,6 +24,14 @@ class CSVProcessor:
         if df.empty:
             return df
         df = self.strategy.apply_logic(df)
-        # Aquí se podría aplicar filtrado adicional usando conditional_update si es necesario
-        return df
+
+        df.to_sql(
+            name=self.database_temp,
+            con=get_engine(),
+            if_exists='replace',
+            index=False,
+            chunksize=1000  # ajusta según tu memoria/red
+        )
+        
+
 
