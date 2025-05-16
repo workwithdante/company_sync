@@ -47,11 +47,13 @@ class SOUpdater:
         paidThroughDate = str(row.get('Pago_Hasta', ''))
         status = str(row['estado'])
         salesorder_no = str(row['so_no'])
+        description = str(row['comentario'])
         
-        if status in ('Paid', 'Life change', 'Update'):
+        if description or status == 'Check':
+            update_logs(self.doc_name, memberID, self.company, self.broker, description if description else status)  
+        elif status in ('Paid', 'Life change', 'Autorization'):
             self.update_sales_order(memberID, paidThroughDate, salesorder_no)
-        elif status != 'New':
-            update_logs(self.doc_name, memberID, self.company, self.broker, status)
+            
 
     def update_orders(self):
         # suponiendo que self.unit_of_work es un Engine o Connection
