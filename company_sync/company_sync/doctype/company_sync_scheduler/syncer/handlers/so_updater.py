@@ -21,23 +21,26 @@ class SOUpdater:
     
     def update_sales_order(self, memberID: str, paidThroughDate: str, salesorder_no: dict):
         try:
+            salesOrderData = {}
+            
             def getSOAllData(salesorder_no, memberID):
                 query_sales = f"SELECT * FROM SalesOrder WHERE salesorder_no = '{salesorder_no}' AND cf_2119 = '{memberID}' LIMIT 1;"
                 salesOrderData = self.vtiger_client.doQuery(query_sales)
                 return salesOrderData
             
-            [salesOrderData] = getSOAllData(salesorder_no, memberID)
+            if pack := getSOAllData(salesorder_no, memberID):
+                [salesOrderData] = pack
 
-            if paidThroughDate > salesOrderData.get('cf_2261'):
-                salesOrderData['cf_2261'] = paidThroughDate
-                salesOrderData['productid'] = '14x29415'
-                salesOrderData['assigned_user_id'] = '19x113'
-                salesOrderData['LineItems'] = {
-                    'productid': '14x29415',
-                    'listprice': '0',
-                    'quantity': '1'
-                }
-                return self.vtiger_client.doUpdate(salesOrderData)
+                if paidThroughDate > salesOrderData.get('cf_2261'):
+                    salesOrderData['cf_2261'] = paidThroughDate
+                    salesOrderData['productid'] = '14x29415'
+                    salesOrderData['assigned_user_id'] = '19x113'
+                    salesOrderData['LineItems'] = {
+                        'productid': '14x29415',
+                        'listprice': '0',
+                        'quantity': '1'
+                    }
+                    return self.vtiger_client.doUpdate(salesOrderData)
         except Exception as e:
             self.logger.error(f"Error updating memberID {memberID}: {e}")
             return None
