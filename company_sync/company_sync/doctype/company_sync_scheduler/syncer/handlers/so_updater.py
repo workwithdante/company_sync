@@ -47,7 +47,7 @@ class SOUpdater:
         paidThroughDate = str(row.get('Pago_Hasta', ''))
         status = str(row['estado'])
         salesorder_no = str(row['so_no'])
-        description = str(row['comentario'])
+        description = row.get('comentario')
         
         if description or status == 'Check':
             update_logs(self.doc_name, memberID, self.company, self.broker, description if description else status)  
