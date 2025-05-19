@@ -7,9 +7,11 @@ class FrappeProgressObserver(ProgressObserver):
             event,
             {
                 'percentage': f"{percentage * 100:.2f}",
+                'vtigercrm_sync': context['doc_name'],
             },
             doctype=context['doctype'],
             docname=context['doc_name'],
+            after_commit=True,
         )
     
     def updateError(self, error_log: str, context: dict, event = 'vtigercrm_sync_error_log'):
@@ -17,9 +19,11 @@ class FrappeProgressObserver(ProgressObserver):
             event,
             {
                 'error_log': error_log,
+                'vtigercrm_sync': context['doc_name'],
             },
             doctype=context['doctype'],
             docname=context['doc_name'],
+            after_commit=True,
         )
     
     def updateLog(self, context: dict, event = 'vtigercrm_sync_error_log'):
@@ -33,6 +37,7 @@ class FrappeProgressObserver(ProgressObserver):
             },
             doctype=context['doctype'],
             docname=context['doc_name'],
+            after_commit=True,
         )
     
     
@@ -44,6 +49,7 @@ class FrappeProgressObserver(ProgressObserver):
             },
             doctype=context['doctype'],
             docname=context['doc_name'],
+            after_commit=True,
         )
 
 
