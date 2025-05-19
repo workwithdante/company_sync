@@ -67,7 +67,7 @@ class Syncer:
         except Exception as e:
             frappe.logger().error(f"Sync error: {str(e)}")
             
-            self.progress_observer.updateError(f"Sync error: {str(e)}", {'doc_name': self.doc_name, "doc_type": "Company Sync Scheduler"})
+            self.progress_observer.updateError(f"Sync error: {str(e)}", {'doc_name': self.doc_name, "doctype": "Company Sync Scheduler"}, event="company_sync_error_log")
             raise
 
     def _process_records(self, results):
@@ -79,11 +79,11 @@ class Syncer:
             try:
                 frappe.db.begin()
                 # Update progress through observer
-                self.progress_observer.update(idx/total_records, {'doc_name': self.doc_name, "doc_type": "Company Sync Scheduler"})
+                self.progress_observer.update(idx/total_records, {'doc_name': self.doc_name, "doctype": "Company Sync Scheduler"}, event="company_sync_refresh")
                 # Process individual record using RecordProcessor
                 self.record_processor.process_record(record, self.config.mapping_file)
                 frappe.db.commit()
             except Exception as e:
                 frappe.logger().error(f"Error processing record {idx}: {str(e)}")
-                self.progress_observer.updateError(f"Error processing record {idx}: {str(e)}", {'doc_name': self.doc_name, "doc_type": "Company Sync Scheduler"})
+                self.progress_observer.updateError(f"Error processing record {idx}: {str(e)}", {'doc_name': self.doc_name, "doctype": "Company Sync Scheduler"}, event="company_sync_refresh")
                 raise SyncError(f"Failed to process record {idx}") from e
