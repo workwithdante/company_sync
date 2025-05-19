@@ -59,18 +59,19 @@ class SOUpdater:
             
 
     def update_orders(self):
-        # suponiendo que self.unit_of_work es un Engine o Connection
-        sql = "CALL get_status(%s, %s)"
-        df = pd.read_sql(sql,
-            con=get_engine(), 
-            params=(self.company, self.broker))
+        if engine := get_engine():
+            # suponiendo que self.unit_of_work es un Engine o Connection
+            sql = "CALL get_status(%s, %s)"
+            df = pd.read_sql(sql,
+                con=engine, 
+                params=(self.company, self.broker))
 
-        total = len(df)
-        for i, (_, row) in enumerate(tqdm(df.iterrows(), total=len(df), desc="Validando Órdenes de Venta 2..."), start=1):
-            self.process_order(row)
-            # Calcula el progreso en porcentaje
-            progress = float(i / total)
-            # Guarda el progreso en caché
-            progress_observer.update(progress, {'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'}, event='company_sync_refresh')
-        
-        progress_observer.updateSuccess({'success': True, 'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'})
+            total = len(df)
+            for i, (_, row) in enumerate(tqdm(df.iterrows(), total=len(df), desc="Validando Órdenes de Venta 2..."), start=1):
+                self.process_order(row)
+                # Calcula el progreso en porcentaje
+                progress = float(i / total)
+                # Guarda el progreso en caché
+                progress_observer.update(progress, {'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'}, event='company_sync_refresh')
+            
+            progress_observer.updateSuccess({'success': True, 'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'})
