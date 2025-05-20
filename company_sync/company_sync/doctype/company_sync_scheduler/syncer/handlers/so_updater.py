@@ -52,7 +52,7 @@ class SOUpdater:
         salesorder_no = str(row['so_no'])
         description = row.get('comentario')
         
-        if description or status == 'Check':
+        if description:
             update_logs(self.doc_name, memberID, self.company, self.broker, description if description else status)  
         elif status in ('Paid', 'Life change', 'Autorization'):
             self.update_sales_order(memberID, paidThroughDate, salesorder_no)
