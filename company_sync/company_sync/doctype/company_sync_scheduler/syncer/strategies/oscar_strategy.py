@@ -12,4 +12,16 @@ class OscarStrategy(BaseStrategy):
         )
         df_normalize = df.rename(columns={v: k for k, v in self.fields.items()})
 
-        return df_normalize[df_normalize['policyStatus']!= 'Inactive']
+        return df_normalize
+    
+    x = 5
+    if x > 0: 
+        continue
+    
+    if x < 0:
+        return
+    
+    if x == 0:
+        return
+    
+    
