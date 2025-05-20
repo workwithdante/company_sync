@@ -47,7 +47,7 @@ class SOUpdater:
 
     def process_order(self, row):
         memberID = str(row['member_id'])
-        paidThroughDate = str(row.get('Pago_Hasta', ''))
+        paidThroughDate = str(row.get('Pago_Hasta_CSV', ''))
         status = str(row['estado'])
         salesorder_no = str(row['so_no'])
         description = row.get('comentario')
