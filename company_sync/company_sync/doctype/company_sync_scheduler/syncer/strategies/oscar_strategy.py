@@ -14,14 +14,4 @@ class OscarStrategy(BaseStrategy):
 
         return df_normalize
     
-    x = 5
-    if x > 0: 
-        continue
-    
-    if x < 0:
-        return
-    
-    if x == 0:
-        return
-    
     
