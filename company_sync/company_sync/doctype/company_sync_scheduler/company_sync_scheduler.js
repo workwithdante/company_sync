@@ -27,15 +27,17 @@ frappe.ui.form.on("Company Sync Log", "description", function(frm, cdt, cdn) {
 frappe.ui.form.on("Company Sync Scheduler", {
 	setup(frm) {
 		frappe.realtime.on("company_sync_refresh", ({ percentage, vtigercrm_sync }) => {		
-			// Solo la primera vez se muestra la sección
-			if (!frm._has_shown_sync_log_preview) {
-				console.log("Acá activo section_sync_preview");
-				frm.toggle_display("section_sync_preview", true);
-				frm._has_shown_sync_log_preview = true;
-			}
+			// Validar que el sync corresponda al documento actual
+			if (vtigercrm_sync !== frm.doc.name) return;
+
 			updateProgressBar(frm, percentage);
 			//reloadDocument(frm);
-		});
+			if (!frm._has_shown_sync_log_preview) {
+				frm.toggle_display("section_sync_preview", true);
+				frm.page.clear_primary_action();
+				frm._has_shown_sync_log_preview = true;
+			}
+		})
 		frappe.realtime.on("company_sync_error_log", ({ error_log, company_sync, memberID, company, broker }) => {
 			if (!frm._has_shown_sync_error_log_preview) {
 				console.log("Acá activo section_sync_log_preview");
@@ -176,6 +178,7 @@ frappe.ui.form.on("Company Sync Scheduler", {
 });
 
 function updateProgressBar(frm, percentage) {
+	console.log("Por acá ingresé al updateProgressBar");
 	const $wrapper = frm.get_field("sync_preview").$wrapper;
 	$wrapper.empty();
 	

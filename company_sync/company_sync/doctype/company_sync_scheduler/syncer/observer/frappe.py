@@ -2,7 +2,7 @@ import frappe
 from .base import ProgressObserver
 
 class FrappeProgressObserver(ProgressObserver):
-    def update(self, percentage: float, context: dict, event = 'vtigercrm_sync_refresh'):
+    def update(self, percentage: float, context: dict, event = 'vtigercrm_sync_refresh', after_commit=True):
         frappe.publish_realtime(
             event,
             {
@@ -11,10 +11,10 @@ class FrappeProgressObserver(ProgressObserver):
             },
             doctype=context['doctype'],
             docname=context['doc_name'],
-            after_commit=True,
+            after_commit=after_commit,
         )
     
-    def updateError(self, error_log: str, context: dict, event = 'vtigercrm_sync_error_log'):
+    def updateError(self, error_log: str, context: dict, event = 'vtigercrm_sync_error_log', after_commit=True):
         frappe.publish_realtime(
             event,
             {
@@ -23,10 +23,10 @@ class FrappeProgressObserver(ProgressObserver):
             },
             doctype=context['doctype'],
             docname=context['doc_name'],
-            after_commit=True,
+            after_commit=after_commit,
         )
     
-    def updateLog(self, context: dict, event = 'vtigercrm_sync_error_log'):
+    def updateLog(self, context: dict, event = 'vtigercrm_sync_error_log', after_commit=True):
         frappe.publish_realtime(
             event,
             {
@@ -37,11 +37,11 @@ class FrappeProgressObserver(ProgressObserver):
             },
             doctype=context['doctype'],
             docname=context['doc_name'],
-            after_commit=True,
+            after_commit=after_commit,
         )
     
     
-    def updateSuccess(self, context: dict, event = 'vtigercrm_sync_success'):
+    def updateSuccess(self, context: dict, event = 'vtigercrm_sync_success', after_commit=True):
         frappe.publish_realtime(
             event,
             {
@@ -49,7 +49,7 @@ class FrappeProgressObserver(ProgressObserver):
             },
             doctype=context['doctype'],
             docname=context['doc_name'],
-            after_commit=True,
+            after_commit=after_commit,
         )
 
 

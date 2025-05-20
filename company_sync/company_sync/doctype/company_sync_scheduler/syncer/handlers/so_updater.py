@@ -72,6 +72,6 @@ class SOUpdater:
                 # Calcula el progreso en porcentaje
                 progress = float(i / total)
                 # Guarda el progreso en caché
-                progress_observer.update(progress, {'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'}, event='company_sync_refresh')
+                progress_observer.update(progress, {'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'}, event='company_sync_refresh', after_commit=False)
             
-            progress_observer.updateSuccess({'success': True, 'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'}, event='company_sync_success')
+            progress_observer.updateSuccess({'success': True, 'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'}, event='company_sync_success', after_commit=False)

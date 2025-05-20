@@ -40,7 +40,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Review",
-   "options": "\nCreate Issue\nPortal Error\nSync Error\nPaid\nCheck"
+   "options": "\nCreate Issue\nPortal Error\nSync Error\nPaid\nCheck\nLife Change"
   },
   {
    "fieldname": "description",
