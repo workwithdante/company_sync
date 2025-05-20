@@ -26,7 +26,7 @@ frappe.ui.form.on("Company Sync Log", "description", function(frm, cdt, cdn) {
 
 frappe.ui.form.on("Company Sync Scheduler", {
 	setup(frm) {
-		frappe.realtime.on("company_sync_refresh", ({ percentage }) => {		
+		frappe.realtime.on("company_sync_refresh", ({ percentage, vtigercrm_sync }) => {		
 			// Solo la primera vez se muestra la sección
 			if (!frm._has_shown_sync_log_preview) {
 				console.log("Acá activo section_sync_preview");
