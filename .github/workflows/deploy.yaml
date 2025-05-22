@@ -15,39 +15,53 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      
+      - name: Calculate version & decide skip
+        id: calc
+        run: |
+          # … tu lógica de lectura de tags/commits …
+          if [[ ! "$LAST_COMMIT_MSG" =~ ^(feat:|fix:|docs:|hot:|refactor:|test:|ci:|BREAKING\ CHANGE) ]]; then
+            echo "SKIP_WORKFLOW=true" >> $GITHUB_ENV
+          fi
+          echo "FULL_TAG=$FULL_TAG" >> $GITHUB_ENV
 
-      - name: Print username
-        run: 'echo "Registry username: ${{ secrets.REGISTRY_USERNAME }}"'
-          
-      # Paso 1: Clonar frappe_docker
-      - name: Checkout frappe_docker
-        uses: actions/checkout@v2
-        with:
-          repository: frappe/frappe_docker
-          path: frappe_docker
-          depth: 0
-      # Paso 2: Configurar Docker Buildx
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+      - name: Determine image coordinates
+        if: env.SKIP_WORKFLOW != 'true'
+        id: image
+        run: |
+          echo "registry=docker.io"        >> $GITHUB_OUTPUT
+          echo "image=dantedevenir/sierra-group" >> $GITHUB_OUTPUT
 
-      # Paso 3: Login en el registry Docker
-      - name: Login to Docker registry
-        uses: docker/login-action@v2
-        with:
-          registry: docker.io
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Fetch existing tags from Docker Hub
+        id: fetch-tags
+        run: |
+          # Llamada a la API pública de Hub para obtener tags
+          TAGS_JSON=$(curl -s \
+            "https://hub.docker.com/v2/repositories/dantedevenir/sierra-group/tags?page_size=100")
+
+          # Extrae solo los nombres de tag, filtra semver 4-part, ordena y toma el último
+          LATEST=$(echo "$TAGS_JSON" \
+            | jq -r '.results[].name' \
+            | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sort -V \
+            | tail -n1 \
+            || echo "0.0.0.0")
+
+          echo "latest_tag=$LATEST" >> $GITHUB_OUTPUT
+          echo "🔍 Último tag en registry: $LATEST"
+
 
       - name: Calculate Image Tag
+        if: env.SKIP_WORKFLOW != 'true'
         id: tag
         run: |
           # Obtener el último tag (se asume formato MAJOR.MINOR.PATCH.REVISION)
-          LAST_TAG=$(git describe --tags --abbrev=0 || echo "0.0.0")
-          echo "Último tag: $LAST_TAG"
+          LATEST=${{ steps.fetch-tags.outputs.latest_tag }}
+          echo "Último tag del registry: $LATEST"
           
           # Separar las partes del tag en variables
           IFS='.' read -r MAJOR MINOR PATCH REVISION <<< "$LAST_TAG"
-          
+
           # Obtener el mensaje del último commit
           LAST_COMMIT_MSG=$(git log -1 --pretty=%s)
           echo "Mensaje del último commit: $LAST_COMMIT_MSG"
@@ -57,6 +71,7 @@ jobs:
           # • MINOR: Se incrementa para commits de tipo "feat:".
           # • PATCH: Se incrementa para commits de tipo "fix:" o "hot:".
           # • REVISION: Se incrementa para commits de tipo "refactor:", "docs:", "chore:", "test:" o "ci:".
+
           if [[ "$LAST_COMMIT_MSG" == *"BREAKING CHANGE"* ]]; then
             echo "Commit con BREAKING CHANGE -> Incrementando MAJOR"
             MAJOR=$((MAJOR + 1))
@@ -78,11 +93,11 @@ jobs:
           else
             echo "No se detectó un prefijo reconocido, manteniendo versión actual"
           fi
-          
+
           # Construir el nuevo tag
           FULL_TAG="${MAJOR}.${MINOR}.${PATCH}.${REVISION}"
           
-           # Exportar la variable para los siguientes steps
+          # Exportar la variable para los siguientes steps
           echo "FULL_TAG=$FULL_TAG" >> $GITHUB_ENV
           echo "Nuevo tag calculado: $FULL_TAG"
           
@@ -96,19 +111,61 @@ jobs:
           # Configurar el URL remoto usando el token para autenticarse
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
 
-          echo "Actualizando company_sync/__init__.py con la versión $FULL_TAG"
-          sed -i 's/^__version__ = ".*"$/__version__ = "'${FULL_TAG}'"/' company_sync/__init__.py
-          cat company_sync/__init__.py
-          git add company_sync/__init__.py
+          echo "Actualizando crm_sync/__init__.py con la versión $FULL_TAG"
+          sed -i 's/^__version__ = ".*"$/__version__ = "'${FULL_TAG}'"/' crm_sync/__init__.py
+          cat crm_sync/__init__.py
+          git add crm_sync/__init__.py
           git commit -m "Update __version__ in __init__.py to $FULL_TAG [skip ci]" || echo "No changes to commit"
           git push origin ${{ github.ref }}
           
           # Empujar el nuevo tag al repositorio remoto
           git push origin "$FULL_TAG"
 
+      - name: Print username
+        if: env.SKIP_WORKFLOW != 'true'
+        run: 'echo "Registry username: dantedevenir"'
+          
+      # Paso 1: Clonar frappe_docker
+      - name: Checkout frappe_docker
+        if: env.SKIP_WORKFLOW != 'true'
+        uses: actions/checkout@v2
+        with:
+          repository: frappe/frappe_docker
+          path: frappe_docker
+          depth: 0
+
+            # Paso 1: Clonar frappe_docker
+      - name: Checkout custom_frappe_docker
+        if: env.SKIP_WORKFLOW != 'true'
+        uses: actions/checkout@v2
+        with:
+          repository: sierra-group/frappe_docker
+          path: custom_frappe_docker
+          token: ${{ secrets.GT_PAT }}
+          depth: 0
+
+      - name: Download and encode apps.json
+        if: env.SKIP_WORKFLOW != 'true'
+        run: |
+          export APPS_JSON_BASE64=$(base64 -w 0 custom_frappe_docker/development/apps-example.json)
+          echo "APPS_JSON_BASE64=$APPS_JSON_BASE64" >> $GITHUB_ENV
+
+      # Paso 2: Configurar Docker Buildx
+      - name: Set up Docker Buildx
+        if: env.SKIP_WORKFLOW != 'true'
+        uses: docker/setup-buildx-action@v2
+
+      # Paso 3: Login en el registry Docker
+      - name: Login to Docker registry
+        if: env.SKIP_WORKFLOW != 'true'
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: dantedevenir
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
       - name: Build and Push Docker Image
-        env:
-          APPS_JSON_BASE64: ${{ secrets.APPS_JSON_BASE64 }}
+        if: env.SKIP_WORKFLOW != 'true'
         run: |
           # Verificar que tenemos el valor
           echo "Apps JSON length: ${#APPS_JSON_BASE64}"
@@ -118,40 +175,43 @@ jobs:
             --build-arg FRAPPE_PATH=https://github.com/frappe/frappe \
             --build-arg FRAPPE_BRANCH=version-15 \
             --build-arg APPS_JSON_BASE64="${APPS_JSON_BASE64}" \
-            --tag docker.io/mabecenter/erpnext:${{ env.FULL_TAG }} \
+            --tag docker.io/dantedevenir/sierra-group:${{ env.FULL_TAG }} \
             --file frappe_docker/images/layered/Containerfile .
           
           # Push de la imagen
-          docker push docker.io/mabecenter/erpnext:${{ env.FULL_TAG }}
+          docker push docker.io/dantedevenir/sierra-group:${{ env.FULL_TAG }}
 
       # Paso 6: Clonar el repositorio de infra/helm
       - name: Checkout Infra Repo
+        if: env.SKIP_WORKFLOW != 'true'
         uses: actions/checkout@v2
         with:
-          repository: mabecenter-it/argocd-app
+          repository: sierra-group/argocd-app
           path: argocd-app
-          ref: company_sync
-          token: ${{ secrets.GH_PAT }}
+          ref: main
+          token: ${{ secrets.GT_PAT }}
       
       # Paso 7: Actualizar solo los valores necesarios en el archivo existente
       - name: Update values in infra Repo
+        if: env.SKIP_WORKFLOW != 'true'
         run: |
           # Actualizar solo el tag en el archivo existente
-          sed -i "s|^\(\s*image:\s*mabecenter/erpnext:\).*|\1${FULL_TAG}|" argocd-app/latest/compose.yaml
-
+          sed -i 's|^\([[:space:]]*tag:[[:space:]]*\).*|\1'"${FULL_TAG}"'|' argocd-app/apps/sierra-group/values.yaml
+          
       # Paso 8: Commit y push del nuevo archivo
       - name: Commit and Push Changes
+        if: env.SKIP_WORKFLOW != 'true'
+        env:
+            GT_PAT: ${{ secrets.GT_PAT }}
         run: |
           cd argocd-app
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # Configurar el token directamente en la URL
-          git remote set-url origin "https://${{ secrets.GH_PAT }}@github.com/mabecenter-it/argocd-app.git"
-          git add latest/compose.yaml
+          git remote set-url origin "https://${{ secrets.GT_PAT }}@github.com/sierra-group/argocd-app.git"
+          git add apps/sierra-group/values.yaml
           git commit -m "Update Docker image to ${{ env.FULL_TAG }}"
-          git push origin company_sync
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
+          git push origin main
 
 permissions:
   contents: write
