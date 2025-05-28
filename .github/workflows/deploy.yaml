@@ -107,10 +107,13 @@ jobs:
           # Configurar el URL remoto usando el token para autenticarse
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
 
-          echo "Actualizando ${{ github.repository }}/__init__.py con la versión $FULL_TAG"
-          sed -i 's/^__version__ = ".*"$/__version__ = "'${FULL_TAG}'"/' ${{ github.repository }}/__init__.py
-          cat ${{ github.repository }}/__init__.py
-          git add ${{ github.repository }}/__init__.py
+          MODULE_PATH="${{ github.repository }}/__init__.py"
+          MODULE_NAME=$(basename $(dirname "$MODULE_PATH"))
+
+          echo "Actualizando ${{ MODULE_NAME }}/__init__.py con la versión $FULL_TAG"
+          sed -i 's/^__version__ = ".*"$/__version__ = "'${FULL_TAG}'"/' ${{ MODULE_NAME }}/__init__.py
+          cat ${{ MODULE_NAME }}/__init__.py
+          git add ${{ MODULE_NAME }}/__init__.py
           git commit -m "Update __version__ in __init__.py to $FULL_TAG [skip ci]" || echo "No changes to commit"
           git push origin ${{ github.ref }}
           
