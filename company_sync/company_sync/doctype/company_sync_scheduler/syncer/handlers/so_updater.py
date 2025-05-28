@@ -62,17 +62,30 @@ class SOUpdater:
     def update_orders(self):
         if engine := get_engine():
             # suponiendo que self.unit_of_work es un Engine o Connection
-            sql = "CALL get_status(%s, %s)"
-            df = pd.read_sql(sql,
-                con=engine, 
-                params=(self.company, self.broker))
+            conn = engine.raw_connection()
+            try:
+                cursor = conn.cursor()
+                cursor.callproc("get_status", (self.company, self.broker))
 
-            total = len(df)
-            for i, (_, row) in enumerate(tqdm(df.iterrows(), total=len(df), desc="Validando Órdenes de Venta 2..."), start=1):
-                self.process_order(row)
-                # Calcula el progreso en porcentaje
-                progress = float(i / total)
-                # Guarda el progreso en caché
-                progress_observer.update(progress, {'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'}, event='company_sync_refresh', after_commit=False)
-            
-            progress_observer.updateSuccess({'success': True, 'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'}, event='company_sync_success', after_commit=False)
+                # Si devuelve datos
+                results = cursor.fetchall()
+                df = pd.DataFrame(results, columns=[desc[0] for desc in cursor.description])
+                
+                total = cursor.rowcount
+                for i, (_, row) in enumerate(tqdm(df.iterrows(), total=len(df), desc="Validando Órdenes de Venta 2..."), start=1):
+                    self.process_order(row)
+                    # Calcula el progreso en porcentaje
+                    progress = float(i / total)
+                    # Guarda el progreso en caché
+                    progress_observer.update(progress, {'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'}, event='company_sync_refresh', after_commit=False)
+                
+                progress_observer.updateSuccess({'success': True, 'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'}, event='company_sync_success', after_commit=False)
+
+                cursor.close()
+                conn.commit()
+            except Exception as e:
+                self.logger.error(f"Error during SO update: {e}")
+                conn.rollback()
+                raise
+            finally:
+                conn.close()
