@@ -51,11 +51,11 @@ class SOUpdater:
         paidThroughDate = str(row.get('Pago_Hasta_CSV', ''))
         status = str(row['estado'])
         salesorder_no = str(row['so_no'])
-        description = row.get('comentario')
+        comentario = row.get('comentario')
         
-        if description:
-            update_logs(self.doc_name, memberID, self.company, self.broker, description if description else status)  
-        elif status in ('Paid', 'Life change', 'Autorization'):
+        if comentario:
+            update_logs(self.doc_name, memberID, self.company, self.broker, comentario if comentario else status)  
+        elif status in ('Paid', 'Life change', 'Autorization', 'New'):
             self.update_sales_order(memberID, paidThroughDate, salesorder_no)
             
 
