@@ -40,6 +40,7 @@ class SOUpdater:
                         'listprice': '0',
                         'quantity': '1'
                     }
+                    
                     return self.vtiger_client.doUpdate(salesOrderData)
         except Exception as e:
             self.logger.error(f"Error updating memberID {memberID}: {e}")
