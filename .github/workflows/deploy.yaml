@@ -107,17 +107,16 @@ jobs:
           # Configurar el URL remoto usando el token para autenticarse
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
 
-          MODULE_PATH="${{ github.repository }}/__init__.py"
-          MODULE_NAME=$(basename $(dirname "$MODULE_PATH"))
+          REPO_NAME="${{ github.repository }}"  # Ej: "workwithdante/company_sync"
+          MODULE_NAME=$(basename "$REPO_NAME")   # Extrae "company_sync"
+          MODULE_PATH="$MODULE_NAME/__init__.py"
 
-          echo "Actualizando ${{ MODULE_NAME }}/__init__.py con la versión $FULL_TAG"
-          sed -i 's/^__version__ = ".*"$/__version__ = "'${FULL_TAG}'"/' ${{ MODULE_NAME }}/__init__.py
-          cat ${{ MODULE_NAME }}/__init__.py
-          git add ${{ MODULE_NAME }}/__init__.py
+          echo "Actualizando $MODULE_PATH con la versión $FULL_TAG"
+          sed -i 's/^__version__ = ".*"$/__version__ = "'${FULL_TAG}'"/' "$MODULE_PATH"
+          cat "$MODULE_PATH"
+          git add "$MODULE_PATH"
           git commit -m "Update __version__ in __init__.py to $FULL_TAG [skip ci]" || echo "No changes to commit"
           git push origin ${{ github.ref }}
-          
-          # Empujar el nuevo tag al repositorio remoto
           git push origin "$FULL_TAG"
 
       - name: Print username
