@@ -19,20 +19,16 @@ jobs:
       - name: Calculate version & decide skip
         id: calc
         run: |
+          # Obtener el mensaje del último commit
+          LAST_COMMIT_MSG=$(git log -1 --pretty=%s)
           # … tu lógica de lectura de tags/commits …
           if [[ ! "$LAST_COMMIT_MSG" =~ ^(feat:|fix:|docs:|hot:|refactor:|test:|ci:|BREAKING\ CHANGE) ]]; then
             echo "SKIP_WORKFLOW=true" >> $GITHUB_ENV
           fi
           echo "FULL_TAG=$FULL_TAG" >> $GITHUB_ENV
 
-      - name: Determine image coordinates
-        if: env.SKIP_WORKFLOW != 'true'
-        id: image
-        run: |
-          echo "registry=docker.io"        >> $GITHUB_OUTPUT
-          echo "image=dantedevenir/sierra-group" >> $GITHUB_OUTPUT
-
       - name: Fetch existing tags from Docker Hub
+        if: env.SKIP_WORKFLOW != 'true'
         id: fetch-tags
         run: |
           # Llamada a la API pública de Hub para obtener tags
@@ -60,7 +56,7 @@ jobs:
           echo "Último tag del registry: $LATEST"
           
           # Separar las partes del tag en variables
-          IFS='.' read -r MAJOR MINOR PATCH REVISION <<< "$LAST_TAG"
+          IFS='.' read -r MAJOR MINOR PATCH REVISION <<< "$LATEST"
 
           # Obtener el mensaje del último commit
           LAST_COMMIT_MSG=$(git log -1 --pretty=%s)
