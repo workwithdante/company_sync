@@ -76,7 +76,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-03-05 16:23:29.473287",
+ "modified": "2025-05-30 14:07:14.812934",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync",
@@ -85,8 +85,12 @@
  "parent_page": "",
  "public": 1,
  "quick_lists": [],
- "restrict_to_domain": "company_sync",
- "roles": [],
+ "restrict_to_domain": "",
+ "roles": [
+  {
+   "role": "Syncer User"
+  }
+ ],
  "sequence_id": 30.0,
  "shortcuts": [],
  "title": "Company Sync"
