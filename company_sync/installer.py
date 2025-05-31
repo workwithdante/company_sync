@@ -64,7 +64,6 @@ def save_config_vtigercrm():
 	db_type = str(conf.type).islower()
 	db_conn = str(conf.connector).islower()
 
-	conf.mi_campo = "Nuevo valor"  # Asigna el nuevo valor a un campo
 	conf.save()  # Guarda el documento
 
 	# Update site config with VTiger settings
