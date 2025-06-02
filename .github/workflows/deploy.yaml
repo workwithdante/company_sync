@@ -214,4 +214,3 @@ jobs:
 permissions:
   contents: write
   packages: write
-  
