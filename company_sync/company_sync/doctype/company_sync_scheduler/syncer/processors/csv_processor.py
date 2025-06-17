@@ -2,14 +2,12 @@
 from company_sync.company_sync.doctype.company_sync_scheduler.database.engine import get_engine
 import pandas as pd
 import logging
-from company_sync.company_sync.doctype.company_sync_scheduler.syncer.utils import conditional_update
 import frappe
 
 class CSVProcessor:
-    def __init__(self, csv_path: str, strategy, database_temp):
+    def __init__(self, csv_path: str, db_name):
         self.csv_path = csv_path
-        self.strategy = strategy  # Estrategia que implementa CompanyStrategy
-        self.database_temp = database_temp
+        self.db_name = db_name
         self.logger = logging.getLogger(__name__)
     
     def read_csv(self) -> pd.DataFrame:
@@ -23,15 +21,12 @@ class CSVProcessor:
         df = self.read_csv()
         if df.empty:
             return df
-        df = self.strategy.apply_logic(df)
-
+        
         df.to_sql(
-            name=self.database_temp,
+            name=self.db_name,
             con=get_engine(),
             if_exists='replace',
             index=False,
             chunksize=1000  # ajusta según tu memoria/red
         )
-        
-
 

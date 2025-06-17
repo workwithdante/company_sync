@@ -10,10 +10,9 @@ from company_sync.company_sync.doctype.company_sync_scheduler.syncer.utils impor
 from tqdm import tqdm
 
 class SOUpdater:
-    def __init__(self, vtiger_client, company: str, data_config: dict, broker: str, doc_name: str, logger=None):
+    def __init__(self, vtiger_client, company: str, broker: str, doc_name: str, logger=None):
         self.vtiger_client = vtiger_client
         self.company = company
-        self.data_config = data_config
         self.broker = broker
         self.doc_name = doc_name
         self.logger = logger if logger is not None else logging.getLogger(__name__)
@@ -47,16 +46,17 @@ class SOUpdater:
             return None
 
     def process_order(self, row):
-        memberID = str(row['member_id'])
-        paidThroughDate = str(row.get('Pago_Hasta_CSV', ''))
-        status = str(row['estado'])
-        salesorder_no = str(row['so_no'])
-        comentario = row.get('comentario')
+        status = row.iloc[0]
+        json_str = row.iloc[1]
+        memberID = json_str.get('member_id')
+        paidThroughDate = json_str.get('paid_through_date_csv', '')
         
-        if comentario:
-            update_logs(self.doc_name, memberID, self.company, self.broker, comentario if comentario else status)  
-        elif status in ('Paid', 'Life change', 'Autorization', 'New'):
+        salesorder_no = json_str.get('so_no')
+        
+        if status in ('Paid'):
             self.update_sales_order(memberID, paidThroughDate, salesorder_no)
+        else:
+            update_logs(self.doc_name, memberID, self.company, self.broker, status)
             
 
     def update_orders(self):
@@ -65,7 +65,7 @@ class SOUpdater:
             conn = engine.raw_connection()
             try:
                 cursor = conn.cursor()
-                cursor.callproc("get_status", (self.company, self.broker))
+                cursor.callproc("company.get_status_by", (self.company, self.broker))
 
                 # Si devuelve datos
                 results = cursor.fetchall()
