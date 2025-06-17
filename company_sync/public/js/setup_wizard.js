@@ -64,13 +64,13 @@ company_sync.setup.slides_settings = [
 		onload: function (slide) {
             let type_field = slide.get_field("type");
             if(type_field) {
-                type_field.df.options = ['', 'MariaDB', 'MySQL'].join('\n');
+                type_field.df.options = ['', 'MariaDB', 'MySQL', 'Postgresql'].join('\n');
 				type_field.refresh();
             }
             
             let conn_field = slide.get_field("connector");
             if(conn_field) {
-                conn_field.df.options = ['', 'pymysql'].join('\n');
+                conn_field.df.options = ['', 'pymysql', 'psycopg2'].join('\n');
 				conn_field.refresh();
             }
             
