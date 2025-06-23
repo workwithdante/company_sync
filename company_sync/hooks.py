@@ -153,6 +153,12 @@ before_app_install = "company_sync.installer.after_install"
 # 	}
 # }
 
+doc_events = {
+    "Company Sync Scheduler": {
+        "onload": "company_sync.api.load_sync_logs"
+    }
+}
+
 # Scheduled Tasks
 # ---------------
 

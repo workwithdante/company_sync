@@ -4,7 +4,7 @@ from company_sync.company_sync.doctype.company_sync_scheduler.syncer.handlers.so
 
 class SOService:
     def __init__(self, csv_path: str, company: str, broker: str, vtiger_client, doc_name, logger):
-        self.csv_processor = CSVProcessor(csv_path, f"{company.lower()}.{''.join(b[0] for b in broker.split() if b).lower()}")
+        self.csv_processor = CSVProcessor(csv_path, f"{company.lower()}.temp")
         self.so_updater = SOUpdater(vtiger_client, company, broker, doc_name, logger=logger)
 
     def process(self):

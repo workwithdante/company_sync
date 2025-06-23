@@ -47,13 +47,14 @@ class SOUpdater:
 
     def process_order(self, row):
         status = row.iloc[0]
-        json_str = row.iloc[1]
-        memberID = json_str.get('member_id')
-        paidThroughDate = json_str.get('paid_through_date_csv', '')
+        json_crm = row.iloc[1] or {}
+        json_csv = row.iloc[2] or {}
+        memberID = json_csv.get('member_id')
+        paidThroughDate = json_csv.get('paid_through_date', '')
         
-        salesorder_no = json_str.get('so_no')
+        salesorder_no = json_crm.get('so_no')
         
-        if status in ('Paid'):
+        if memberID and salesorder_no and status in ('Update'):
             self.update_sales_order(memberID, paidThroughDate, salesorder_no)
         else:
             update_logs(self.doc_name, memberID, self.company, self.broker, status)
@@ -65,7 +66,7 @@ class SOUpdater:
             conn = engine.raw_connection()
             try:
                 cursor = conn.cursor()
-                cursor.callproc("company.get_status_by", (self.company, self.broker))
+                cursor.callproc("company.get_status_by", (self.company, self.broker, self.doc_name))
 
                 # Si devuelve datos
                 results = cursor.fetchall()

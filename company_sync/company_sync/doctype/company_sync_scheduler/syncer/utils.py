@@ -4,57 +4,6 @@ from company_sync.company_sync.doctype.company_sync_scheduler.syncer.observer.fr
 import frappe
 from dateutil.relativedelta import relativedelta
 
-
-def get_fields(company: str) -> dict:
-    company = company.lower()
-    fields = {
-        'aetna': {
-            'memberID': 'Issuer Assigned ID',
-            'paidThroughDate': 'Paid Through Date',
-            'policyTermDate': 'Broker Term Date',
-            'format': '%B %d, %Y',
-            'policyStatus': 'Policy Status'
-        },
-        'oscar': {
-            'memberID': 'Member ID',
-            'paidThroughDate': 'Paid Through Date',
-            'policyTermDate': 'Coverage end date',
-            'format': '%B %d, %Y',
-            'policyStatus': 'Policy status'
-        },
-        'ambetter': {
-            'memberID': 'Policy Number',
-            'paidThroughDate': 'Paid Through Date',
-            'policyTermDate': 'Policy Term Date',
-            'format': '%m/%d/%Y'
-        },
-        'molina': {
-            'memberID': 'Subscriber_ID',
-            'paidThroughDate': 'Paid_Through_Date',
-            'policyTermDate': 'Broker_End_Date',
-            'format': '%m/%d/%Y',
-            'policyStatus': 'Status'
-        }
-    }
-    default = {
-        'memberID': 'Member ID',
-        'paidThroughDate': 'Paid Through Date',
-        'format': '%m/%d/%Y'
-    }
-    return fields.get(company, default)
-
-def conditional_update(company: str) -> dict:
-    company = company.lower()
-    if company == 'aetna':
-        return {'Relationship': 'Self', 'Policy Status': 'Active'}
-    elif company == 'ambetter':
-        return {'Payable Agent': 'Health Family Insurance'}
-    elif company == 'molina':
-        return {'Status': 'Active'}
-    elif company == 'oscar':
-        return {'cond': '!=', 'Policy status': 'Inactive'}
-    return {}
-
 def calculate_paid_through_date(status: str, date_format: str = '%B %d, %Y') -> str:
     today = datetime.date.today()
     if status == 'Active' or status == 'Paid binder':
