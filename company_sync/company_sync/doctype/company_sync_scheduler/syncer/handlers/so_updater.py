@@ -66,19 +66,21 @@ class SOUpdater:
             conn = engine.raw_connection()
             try:
                 cursor = conn.cursor()
-                cursor.callproc("company.get_status_by", (self.company, self.broker, self.doc_name))
+                ts_str = self.doc_name.split("Sync on ", 1)[1]
+                process_date = datetime.datetime.fromisoformat(ts_str)
+                cursor.callproc("company.get_status_by", (self.company, self.broker, self.doc_name, process_date))
 
                 # Si devuelve datos
                 results = cursor.fetchall()
                 df = pd.DataFrame(results, columns=[desc[0] for desc in cursor.description])
                 
                 total = cursor.rowcount
-                for i, (_, row) in enumerate(tqdm(df.iterrows(), total=len(df), desc="Validando Órdenes de Venta 2..."), start=1):
-                    self.process_order(row)
+                #for i, (_, row) in enumerate(tqdm(df.iterrows(), total=len(df), desc="Validando Órdenes de Venta 2..."), start=1):
+                #    self.process_order(row)
                     # Calcula el progreso en porcentaje
-                    progress = float(i / total)
+                #    progress = float(i / total)
                     # Guarda el progreso en caché
-                    progress_observer.update(progress, {'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'}, event='company_sync_refresh', after_commit=False)
+                #    progress_observer.update(progress, {'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'}, event='company_sync_refresh', after_commit=False)
                 
                 progress_observer.updateSuccess({'success': True, 'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'}, event='company_sync_success', after_commit=False)
 

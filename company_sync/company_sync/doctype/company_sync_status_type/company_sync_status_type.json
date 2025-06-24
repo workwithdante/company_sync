@@ -1,0 +1,45 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-06-24 14:01:30.143939",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "error"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "error",
+   "fieldtype": "Check",
+   "label": "Error"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "links": [],
+ "modified": "2025-06-24 14:26:57.298725",
+ "modified_by": "Administrator",
+ "module": "Company Sync",
+ "name": "Company Sync Status Type",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

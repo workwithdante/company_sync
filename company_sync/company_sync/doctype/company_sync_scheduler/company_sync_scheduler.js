@@ -1,28 +1,5 @@
 // Copyright (c) 2024, Dante Devenir and contributors
 // For license information, please see license.txt
-frappe.ui.form.on("Company Sync Log", "review", function(frm, cdt, cdn) {
-	var item = locals[cdt][cdn]; // this is where the magic happens
-	// locals is a global array that contains all the local documents opened by the user
-	// item is the row that the user is working with
-	// to what you need to do and update it back
-
-	console.log(item);
-	
-	let newValue = item.review;
-	let memberID = item.memberid;
-
-	frappe.call({
-		method: "company_sync.company_sync.doctype.company_sync_scheduler.company_sync_scheduler.update_log_review",
-		args: { name: item.name, review: newValue },
-		callback: function (r) {
-			//console.log("Update")
-		}
-	});
-});
-
-frappe.ui.form.on("Company Sync Log", "description", function(frm, cdt, cdn) {
-	frm.save();
-});
 
 frappe.ui.form.on("Company Sync Scheduler", {
 	setup(frm) {
@@ -47,13 +24,19 @@ frappe.ui.form.on("Company Sync Scheduler", {
 
 			var d = frm.add_child("sync_log");
 			d.memberid = memberID;
-			d.messages = error_log;
+			d.status = error_log;
 
 			frm.refresh_field('sync_log');
 			
 		})
 		frappe.realtime.on("company_sync_success", ({ company_sync }) => {		
+			if (!frm._has_shown_sync_log_preview) {
+				frm.toggle_display("section_sync_preview", true);
+				frm.page.clear_primary_action();
+				frm._has_shown_sync_log_preview = true;
+			}
 			successProgressBar(frm);
+			frm.refresh()
 		})
 	},
 	onload(frm) {
@@ -67,7 +50,7 @@ frappe.ui.form.on("Company Sync Scheduler", {
 		frm._has_shown_sync_log_preview = false;
 		frm._has_shown_sync_error_log_preview = false;
 	},
-	hide_index(frm) {
+	/*hide_index(frm) {
 		const $sync_log_wrapper = frm.get_field("sync_log").$wrapper;
 		console.log($sync_log_wrapper)
 		let $header_index = $sync_log_wrapper.find('.row-index');
@@ -81,7 +64,7 @@ frappe.ui.form.on("Company Sync Scheduler", {
 		$header_check.each(function(index, element) {
 			$(element).hide();
 		});
-	},
+	},*/
     onload_post_render(frm) {
 		frm.trigger("update_primary_action");
 		console.log("No debi entrar acá");
@@ -91,7 +74,7 @@ frappe.ui.form.on("Company Sync Scheduler", {
 			frm.enable_save();
 			return;
 		}
-		frm.disable_save();
+		//frm.disable_save();
 		if (frm.doc.status !== "Success") {
 			if (!frm.is_new()) {
 				let label = frm.doc.status === "Pending" ? __("Start Sync") : __("Retry");
@@ -106,7 +89,7 @@ frappe.ui.form.on("Company Sync Scheduler", {
 			frm.toggle_display("section_sync_log_preview", true);
 			frm._has_shown_sync_log_preview = false;
 			console.log("Acá active en update_primary_action -> section_sync_log_preview");
-			frm.disable_save();
+			//frm.disable_save();
 			frm.set_df_property("company_file", "read_only", 1);
 		} else {
 			frm.enable_save();
@@ -133,7 +116,7 @@ frappe.ui.form.on("Company Sync Scheduler", {
 		const $sync_log_wrapper = frm.get_field("sync_log").$wrapper;
 	  
 		function attachClickEvent() {
-		  let $header = $sync_log_wrapper.find('.grid-heading-row div[data-fieldname="messages"]').first();
+		  let $header = $sync_log_wrapper.find('.grid-heading-row div[data-fieldname="status"]').first();
 		  if ($header.length) {
 			// Aplicar estilo global (si no lo tienes ya en CSS)
 			$header.css({
@@ -154,8 +137,8 @@ frappe.ui.form.on("Company Sync Scheduler", {
 			  } else {
 				// Ordenar de forma descendente
 				frm.doc.sync_log.sort((a, b) => {
-				  if (a.messages < b.messages) return 1;
-				  if (a.messages > b.messages) return -1;
+				  if (a.status < b.status) return 1;
+				  if (a.status > b.status) return -1;
 				  return 0;
 				});
 				frm._is_sorted_desc = true;
@@ -177,7 +160,7 @@ frappe.ui.form.on("Company Sync Scheduler", {
 	},		  
 });
 
-function updateProgressBar(frm, percentage) {
+/*function updateProgressBar(frm, percentage) {
 	console.log("Por acá ingresé al updateProgressBar");
 	const $wrapper = frm.get_field("sync_preview").$wrapper;
 	$wrapper.empty();
@@ -193,9 +176,9 @@ function updateProgressBar(frm, percentage) {
 		})
 		.text(`${percentage}%`)
 		.appendTo($progress);
-}
+}*/
 
-function successProgressBar(frm) {
+/*function successProgressBar(frm) {
 	const $wrapper = frm.get_field("sync_preview").$wrapper;
 	$wrapper.empty();
 	
@@ -218,4 +201,4 @@ function successProgressBar(frm) {
 function reloadDocument(frm) {
 	frappe.model.with_doc("Company Sync Scheduler", frm.doc.name)
 		.then(() => frm.reload_doc());
-}
+}*/

@@ -1,39 +1,20 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "hash",
+ "autoname": "format:{log_id}-{sync_on}",
  "creation": "2024-12-06 15:17:31.530507",
  "doctype": "DocType",
- "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "memberid",
-  "messages",
-  "review",
-  "description"
+  "log_id",
+  "sync_on",
+  "id",
+  "status",
+  "crm",
+  "csv",
+  "review"
  ],
  "fields": [
-  {
-   "columns": 6,
-   "fieldname": "messages",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Messages",
-   "read_only": 1,
-   "reqd": 1,
-   "width": "200px"
-  },
-  {
-   "columns": 2,
-   "fieldname": "memberid",
-   "fieldtype": "Data",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Member ID",
-   "read_only": 1,
-   "reqd": 1
-  },
   {
    "columns": 2,
    "fieldname": "review",
@@ -43,21 +24,74 @@
    "options": "\nCreate Issue\nPortal Error\nSync Error\nPaid\nCheck\nLife Change"
   },
   {
-   "fieldname": "description",
-   "fieldtype": "Text",
-   "label": "Description"
+   "columns": 2,
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "ID",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "csv",
+   "fieldtype": "JSON",
+   "label": "CSV",
+   "read_only": 1
+  },
+  {
+   "fieldname": "crm",
+   "fieldtype": "JSON",
+   "label": "CRM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Status",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "log_id",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Log ID",
+   "unique": 1
+  },
+  {
+   "fieldname": "sync_on",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Sync On"
   }
  ],
  "in_create": 1,
- "istable": 1,
+ "is_virtual": 1,
  "links": [],
- "modified": "2025-05-19 08:22:22.800116",
+ "modified": "2025-06-24 14:35:40.773662",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync Log",
- "naming_rule": "Random",
+ "naming_rule": "Expression",
  "owner": "Administrator",
- "permissions": [],
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
  "read_only": 1,
  "row_format": "Dynamic",
  "sort_field": "creation",

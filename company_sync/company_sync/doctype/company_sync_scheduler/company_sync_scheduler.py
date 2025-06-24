@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 # Import Frappe framework components
+from company_sync.company_sync.doctype.company_sync_log.company_sync_log import CompanySyncLog
 import frappe
 from frappe import _
 # Import sync implementation
@@ -20,6 +21,20 @@ class CompanySyncScheduler(Document):
 	def before_save(self):
 		# Set sync timestamp before saving
 		self.sync_on = self.creation
+
+	def onload(self):
+		"""
+		Al cargar el documento, filtramos sync_log según lo seleccionado en status_sync.
+		"""
+		#rows = CompanySyncLog.get_sync_logs(batch_name=self.name)
+		#doc.set("sync_log", rows)
+
+		# Si no hay filtro, no hacemos nada
+		if not getattr(self, "status_type", None):
+			return
+
+		rows = CompanySyncLog.get_sync_logs(batch_name=self.name, filters=[row.status_type for row in self.status_type])
+		self.sync_log = rows
 
 	def start_sync(self):
 		# Import scheduler status check

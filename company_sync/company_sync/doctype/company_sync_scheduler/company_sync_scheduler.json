@@ -18,6 +18,7 @@
   "sync_preview",
   "section_sync_log_preview",
   "column_break_psyl",
+  "status_type",
   "sync_log"
  ],
  "fields": [
@@ -91,18 +92,24 @@
    "fieldname": "sync_log",
    "fieldtype": "Table",
    "label": "Sync Log",
-   "options": "Company Sync Log",
+   "options": "Company Sync Log Item",
    "width": "100"
   },
   {
    "fieldname": "column_break_psyl",
    "fieldtype": "Column Break",
    "width": "100"
+  },
+  {
+   "fieldname": "status_type",
+   "fieldtype": "Table MultiSelect",
+   "label": "Status Type",
+   "options": "Company Sync Status Select"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-06-17 13:51:14.337897",
+ "modified": "2025-06-24 14:45:52.249846",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync Scheduler",
