@@ -6,4 +6,7 @@ from frappe.model.document import Document
 
 
 class CompanySyncSettings(Document):
-	pass
+    from typing import TYPE_CHECKING
+    if TYPE_CHECKING:
+        user_api: str  # DF.Data
+        endpoint: str  # DF.Data

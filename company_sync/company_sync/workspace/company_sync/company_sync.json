@@ -70,13 +70,13 @@
    "is_query_report": 0,
    "label": "Company Sync",
    "link_count": 0,
-   "link_to": "Company Sync Scheduler",
+   "link_to": "Company Sync Register",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2025-05-30 14:07:14.812934",
+ "modified": "2025-06-25 08:29:12.099647",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync",

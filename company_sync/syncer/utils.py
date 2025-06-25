@@ -1,6 +1,6 @@
 # File: company_sync/utils.py
 import datetime
-from company_sync.company_sync.doctype.company_sync_scheduler.syncer.observer.frappe import FrappeProgressObserver
+from company_sync.syncer.observer.frappe import FrappeProgressObserver
 import frappe
 from dateutil.relativedelta import relativedelta
 

@@ -3,62 +3,69 @@
 
 # import frappe
 import json
-from company_sync.company_sync.doctype.company_sync_scheduler.database.engine import get_engine
+from typing import Self
+from company_sync.database.engine import get_engine
 import frappe
 from frappe.model.document import Document
 from datetime import datetime
+from frappe.types.DF import Datetime
+from frappe.utils import cint
 from sqlalchemy import text
 
 class CompanySyncLog(Document):
-	def db_insert(self):
+	from typing import TYPE_CHECKING
+	if TYPE_CHECKING:
+		from frappe.types import DF
+		sync_on: DF.Datetime
+		log_id: DF.Int
+		status: DF.Data
+		crm: DF.Text
+		csv: DF.Text
+		review: DF.Text
+		
+	def db_insert(self, ignore_if_duplicate=False):
 		pass
 
-	def delete(self):
+	def delete(self, ignore_permissions=False, force=False, *, delete_permanently=False):
 		pass
 
-	def load_from_db(self):
-		[row] = self.get_sync_logs(log_name = self.name)
-		#row.modified = now()
-		super(Document, self).__init__(row)
+	def load_from_db(self) -> Self:
+		[log] = self.get_sync_logs(log_name=self.name)
+  
+		super(Document, self).__init__(log)
+
+
+		#review_row = self.get_sync_logs(log_id=self.name)
+		#if review_row:
+			# Ejemplo: asignar datos adicionales a atributos personalizados
+			#self.review_type_data = review_row
+
+		return self
 	
 	def db_update(self):
 		self.update_sync_log(self.sync_on, self.log_id, self.review)
 
 	@staticmethod
-	def get_list(doctype, txt=None, searchfield=None, start=0,
-				 page_length=20, filters=None, as_list=False, reference_doctype=None,
-				 fields=None, order_by=None, limit_start=None, limit_page_length=None,
-				 with_related=None, group_by=None, debug=False, parent_doc=None):
-		"""
-		Filtro dual: 
-		- Si estamos en Link/Autocomplete (txt is not None): devolvemos [[value, desc], ...]
-		- Si estamos en Report/List View: devolvemos [{…}, {…}, …]
-		"""
-		# 1) Buscar todos los logs (podrías filtrar por batch_name usando filters)
-		batch = (filters or {}).get("batch_name")
-		logs = CompanySyncLog.get_sync_logs(batch)
+	def get_list(args):
+		filters = args.get("filters") or {}
+		start = cint(args.get("limit_start")) or 0
+		page_length = cint(args.get("limit_page_length")) or 20
+		order_by = args.get("order_by") or "process_date desc"
 
-		# 2) Si es búsqueda por texto (Link/Autocomplete)
-		if txt:
-			# filtrado rápido por el nombre
-			logs = [r for r in logs if txt.lower() in r.name.lower()]
-			# paginación
-			page = logs[start:start + page_length]
+		batch = filters.get("batch_name")
+		log_id = filters.get("log_id")
+		log_name = filters.get("name")
+		status_filter = filters.get("status")
 
-			# Link espera listas de dos columnas [value, description]
-			return [[r.name, r.status] for r in page]
+		logs = CompanySyncLog.get_sync_logs(
+			batch_name=batch,
+			log_id=log_id,
+			log_name=log_name,
+			filters=[status_filter] if status_filter else []
+		)
 
-		# 3) Si llegamos aquí, es report o list view → devolver dicts completos
-		#    aplica paginación genérica si quieres
-		page = logs[start:start + (page_length or len(logs))]
-
-		# Para reportview.compress, cada row debe ser un dict
-		if as_list:
-			# [{ name, error, creation, modified }, …]
-			return page
-		else:
-			# [[value, description], …]
-			return [[r["name"], r.get("error", "")] for r in page]
+		# Paginar manualmente
+		return [d.as_dict() for d in logs[start : start + page_length]]
 
 	@staticmethod
 	def get_count(args):
@@ -112,8 +119,7 @@ class CompanySyncLog(Document):
 				for idx, r in enumerate(results, start=1):
 					crm_json = json.loads(r[4] or "{}")
 					csv_json = json.loads(r[5] or "{}")
-					rows.append(
-		 				frappe.get_doc({
+					rows.append({
 						"doctype": "Company Sync Log",
 						"id": csv_json.get('member_id') or crm_json.get('so_no'),
 						"log_id": r[0],
@@ -124,21 +130,16 @@ class CompanySyncLog(Document):
 						"csv": json.dumps(csv_json, indent=4),
 						"creation": r[2],
 						"modified": r[2],
-						"parent": r[1],
-						"parenttype": "Company Sync Scheduler",
-						"parentfield": "sync_log",
-						"idx": idx,
 						"review": r[6] or "",
-						})
-					)
+					})
 		else:
 			frappe.throw("No hay conexión a la base de datos externa.")
 		
-		return rows
+		return [frappe.get_doc(row) for row in rows]
 
 	@staticmethod
 	@frappe.whitelist()
-	def update_sync_log(sync_on: datetime, log_id: int, review: str):
+	def update_sync_log(sync_on: Datetime, log_id: int, review: str):
 		"""
 		Marca todas las filas de status_results cuya batch_name coincide,
 		escribiendo el texto de revisión.
@@ -146,7 +147,7 @@ class CompanySyncLog(Document):
 		if engine := get_engine():
 			# Usamos engine.begin() para commit automático
 			with engine.begin() as conn:
-				result = conn.execute(
+				conn.execute(
 					text("""
 						UPDATE company.status_results
 						SET review = :review

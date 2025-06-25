@@ -5,14 +5,14 @@
 from company_sync.company_sync.doctype.company_sync_log.company_sync_log import CompanySyncLog
 from frappe.model.document import Document
 
-class CompanySyncLogItem(CompanySyncLog, Document):
+class CompanySyncLogItem(Document):
 	@property
 	def sync_on(self):
-		return self.parent
+		return self.sync_on
 
 	@property
 	def log_id(self):
-		return self.memberid
+		return self.log_id
 	
 	def onload(self):
 		"""
@@ -25,10 +25,10 @@ class CompanySyncLogItem(CompanySyncLog, Document):
 	def on_update(self):
 		pass
 
-	def db_update(self, *args, **kwargs):
+	def db_update(self):
         # esto llamará al db_update de CompanySyncLog, que ahora
         # encontrará self.sync_on y self.log_id válidos
-		super().db_update(*args, **kwargs)
+		CompanySyncLog(self).db_update()
 
 	def validate(self):
 		"""

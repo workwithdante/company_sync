@@ -1,27 +1,85 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "format:{company}/{broker} Sync on {creation}",
  "creation": "2025-06-24 22:54:00.730630",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "test_table"
+  "company",
+  "csv_file",
+  "status",
+  "column_break_khlg",
+  "broker",
+  "sync_on",
+  "section_log",
+  "sync_log"
  ],
  "fields": [
   {
-   "fieldname": "test_table",
+   "fieldname": "company",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "\nOscar\nAmbetter\nAetna\nMolina",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "csv_file",
+   "fieldtype": "Attach",
+   "label": "CSV File",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Pending\nSuccess\nPartial Success\nError\nTimed Out",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_khlg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "broker",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Broker",
+   "link_filters": "[[\"Contact\",\"custom_is_broker\",\"=\",1]]",
+   "options": "Contact",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "sync_on",
+   "fieldtype": "Data",
+   "label": "Sync on",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_log",
+   "fieldtype": "Section Break",
+   "hidden": 1
+  },
+  {
+   "fieldname": "sync_log",
    "fieldtype": "Table",
-   "label": "test_table",
+   "label": "Sync Log",
    "options": "Company Sync Log Item"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-06-24 22:54:46.365841",
+ "modified": "2025-06-25 15:06:26.621416",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync Register",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {

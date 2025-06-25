@@ -3,12 +3,12 @@
 
 # Import Frappe framework components
 from company_sync.company_sync.doctype.company_sync_log.company_sync_log import CompanySyncLog
+from company_sync.syncer.syncer import Syncer
 import frappe
 from frappe import _
 # Import sync implementation
 #from company_sync_scheduler.company_sync_scheduler.doctype.vtigercrm_sync.syncer.factory.factory import HandlerFactory
 #from company_sync_scheduler.company_sync_scheduler.doctype.vtigercrm_sync.syncer.record import RecordProcessor
-from company_sync.company_sync.doctype.company_sync_scheduler.syncer.syncer import Syncer
 # Import job timeout exception
 import frappe.realtime
 from rq.timeouts import JobTimeoutException

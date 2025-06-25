@@ -1,21 +1,20 @@
-# File: company_sync/handlers/so_updater.py
+import frappe
+from frappe import _
 import datetime
-import logging
-from company_sync.company_sync.doctype.company_sync_scheduler.database.engine import get_engine
-from company_sync.company_sync.doctype.company_sync_scheduler.database.unit_of_work import UnitOfWork
-from sqlalchemy import text
+from company_sync.database.engine import get_engine
+from company_sync.database.unit_of_work import UnitOfWork
+import psycopg2
 import pandas as pd
 from sqlalchemy.orm import sessionmaker
-from company_sync.company_sync.doctype.company_sync_scheduler.syncer.utils import last_day_of_month, update_logs, progress_observer
-from tqdm import tqdm
+from company_sync.syncer.utils import update_logs, progress_observer
 
-class SOUpdater:
-    def __init__(self, vtiger_client, company: str, broker: str, doc_name: str, logger=None):
+
+class SyncUpdater:
+    def __init__(self, vtiger_client, company: str, broker: int, doc_name: str):
         self.vtiger_client = vtiger_client
         self.company = company
         self.broker = broker
         self.doc_name = doc_name
-        self.logger = logger if logger is not None else logging.getLogger(__name__)
         self.unit_of_work = UnitOfWork(lambda: sessionmaker(bind=get_engine())())
     
     def update_sales_order(self, memberID: str, paidThroughDate: str, salesorder_no: dict):
@@ -42,7 +41,7 @@ class SOUpdater:
                     
                     return self.vtiger_client.doUpdate(salesOrderData)
         except Exception as e:
-            self.logger.error(f"Error updating memberID {memberID}: {e}")
+            frappe.logger().error(f"Error updating memberID {memberID}: {e}")
             return None
 
     def process_order(self, row):
@@ -68,7 +67,26 @@ class SOUpdater:
                 cursor = conn.cursor()
                 ts_str = self.doc_name.split("Sync on ", 1)[1]
                 process_date = datetime.datetime.fromisoformat(ts_str)
-                cursor.callproc("company.get_status_by", (self.company, self.broker, self.doc_name, process_date))
+                
+                
+                try:
+                    cursor.callproc("company.get_status_by", (self.company, self.broker, self.doc_name, process_date))
+                except psycopg2.Error as e:
+                    frappe.logger().error(
+                        f"Error calling stored procedure 'company.get_status_by' "
+                        f"with args (company={self.company}, broker={self.broker}, doc_name={self.doc_name}, process_date={process_date}):\n"
+                        f"{type(e).__name__}: {e.pgerror or e}")
+                    
+                    frappe.throw(
+                        _("Error calling stored procedure 'company.get_status_by'. Please check the logs for more details."),
+                        title=_("Database Error"))
+                    # Log the error using frappe logger
+                    raise e
+                except Exception as e:
+                    frappe.throw(
+                        _("An unexpected error occurred while calling the stored procedure 'company.get_status_by'. Please check the logs for more details."),
+                        title=_("Unexpected Error"))
+                    raise e from e
 
                 # Si devuelve datos
                 results = cursor.fetchall()
@@ -87,7 +105,7 @@ class SOUpdater:
                 cursor.close()
                 conn.commit()
             except Exception as e:
-                self.logger.error(f"Error during SO update: {e}")
+                frappe.logger().error(f"Error during SO update: {e}")
                 conn.rollback()
                 raise
             finally:
