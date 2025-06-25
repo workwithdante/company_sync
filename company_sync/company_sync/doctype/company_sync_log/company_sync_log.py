@@ -20,14 +20,45 @@ class CompanySyncLog(Document):
 		[row] = self.get_sync_logs(log_name = self.name)
 		#row.modified = now()
 		super(Document, self).__init__(row)
-
+	
 	def db_update(self):
 		self.update_sync_log(self.sync_on, self.log_id, self.review)
 
 	@staticmethod
-	def get_list(args):
-		rows = CompanySyncLog.get_sync_logs()
-		return rows
+	def get_list(doctype, txt=None, searchfield=None, start=0,
+				 page_length=20, filters=None, as_list=False, reference_doctype=None,
+				 fields=None, order_by=None, limit_start=None, limit_page_length=None,
+				 with_related=None, group_by=None, debug=False, parent_doc=None):
+		"""
+		Filtro dual: 
+		- Si estamos en Link/Autocomplete (txt is not None): devolvemos [[value, desc], ...]
+		- Si estamos en Report/List View: devolvemos [{…}, {…}, …]
+		"""
+		# 1) Buscar todos los logs (podrías filtrar por batch_name usando filters)
+		batch = (filters or {}).get("batch_name")
+		logs = CompanySyncLog.get_sync_logs(batch)
+
+		# 2) Si es búsqueda por texto (Link/Autocomplete)
+		if txt:
+			# filtrado rápido por el nombre
+			logs = [r for r in logs if txt.lower() in r.name.lower()]
+			# paginación
+			page = logs[start:start + page_length]
+
+			# Link espera listas de dos columnas [value, description]
+			return [[r.name, r.status] for r in page]
+
+		# 3) Si llegamos aquí, es report o list view → devolver dicts completos
+		#    aplica paginación genérica si quieres
+		page = logs[start:start + (page_length or len(logs))]
+
+		# Para reportview.compress, cada row debe ser un dict
+		if as_list:
+			# [{ name, error, creation, modified }, …]
+			return page
+		else:
+			# [[value, description], …]
+			return [[r["name"], r.get("error", "")] for r in page]
 
 	@staticmethod
 	def get_count(args):
@@ -81,7 +112,8 @@ class CompanySyncLog(Document):
 				for idx, r in enumerate(results, start=1):
 					crm_json = json.loads(r[4] or "{}")
 					csv_json = json.loads(r[5] or "{}")
-					rows.append({
+					rows.append(
+		 				frappe.get_doc({
 						"doctype": "Company Sync Log",
 						"id": csv_json.get('member_id') or crm_json.get('so_no'),
 						"log_id": r[0],
@@ -97,13 +129,15 @@ class CompanySyncLog(Document):
 						"parentfield": "sync_log",
 						"idx": idx,
 						"review": r[6] or "",
-					})
+						})
+					)
 		else:
 			frappe.throw("No hay conexión a la base de datos externa.")
 		
 		return rows
 
 	@staticmethod
+	@frappe.whitelist()
 	def update_sync_log(sync_on: datetime, log_id: int, review: str):
 		"""
 		Marca todas las filas de status_results cuya batch_name coincide,

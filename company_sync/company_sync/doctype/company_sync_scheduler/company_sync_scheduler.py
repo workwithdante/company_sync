@@ -21,6 +21,14 @@ class CompanySyncScheduler(Document):
 	def before_save(self):
 		# Set sync timestamp before saving
 		self.sync_on = self.creation
+  
+	def validate(self):
+		"""
+		Validamos el documento antes de guardarlo.
+		- Si no hay sync_on, lo establecemos a la fecha de creación.
+		- Si no hay status, lo establecemos a "Pending".
+		"""
+		pass
 
 	def onload(self):
 		"""
@@ -31,10 +39,11 @@ class CompanySyncScheduler(Document):
 
 		# Si no hay filtro, no hacemos nada
 		if not getattr(self, "status_type", None):
-			return
-
-		rows = CompanySyncLog.get_sync_logs(batch_name=self.name, filters=[row.status_type for row in self.status_type])
-		self.sync_log = rows
+			rows = CompanySyncLog.get_sync_logs(batch_name=self.name)
+			self.sync_log = rows
+		else:
+			rows = CompanySyncLog.get_sync_logs(batch_name=self.name, filters=[row.get("status_type") for row in self.status_type])
+			self.sync_log = rows
 
 	def start_sync(self):
 		# Import scheduler status check

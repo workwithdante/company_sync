@@ -1,6 +1,44 @@
 // Copyright (c) 2024, Dante Devenir and contributors
 // For license information, please see license.txt
 
+frappe.ui.form.on('Company Sync Log Item', {
+  review: function(frm, cdt, cdn) {
+    const row = locals[cdt][cdn];
+    // 1) Batch = el name del padre
+    const batch_name = frm.doc.name;
+    // 2) Member = el campo que identifica la fila en tu tabla externa
+    const memberid   = row.memberid;
+    // 3) Nuevo review
+    const review     = row.review;
+
+    // 4) Llamada al servidor para actualizar la tabla externa
+	console.log(item);
+	
+	let newReview = item.review;
+	let p_log_id = item.id;
+	let p_sync_on = cdt.sync_on;
+
+	frappe.call({
+		method: "company_sync.company_sync.doctype.company_sync_log.update_sync_log.update_sync_log",
+		args: { sync_on: p_sync_on, log_id: p_log_id, review: newReview },
+		callback: function (r) {
+			//console.log("Update")
+		}
+	});
+  }
+});
+
+frappe.ui.form.on('Company Sync Log Item', {
+  refresh(frm) {
+    co
+  }
+});
+
+
+frappe.ui.form.on("Company Sync Log Item", "review2", function(frm, cdt, cdn) {
+	console.log("Review2 triggered");
+});
+
 frappe.ui.form.on("Company Sync Scheduler", {
 	setup(frm) {
 		frappe.realtime.on("company_sync_refresh", ({ percentage, vtigercrm_sync }) => {		
@@ -29,7 +67,7 @@ frappe.ui.form.on("Company Sync Scheduler", {
 			frm.refresh_field('sync_log');
 			
 		})
-		frappe.realtime.on("company_sync_success", ({ company_sync }) => {		
+		/*frappe.realtime.on("company_sync_success", ({ company_sync }) => {		
 			if (!frm._has_shown_sync_log_preview) {
 				frm.toggle_display("section_sync_preview", true);
 				frm.page.clear_primary_action();
@@ -37,7 +75,7 @@ frappe.ui.form.on("Company Sync Scheduler", {
 			}
 			successProgressBar(frm);
 			frm.refresh()
-		})
+		})*/
 	},
 	onload(frm) {
 		/* if (frm.is_new()) {

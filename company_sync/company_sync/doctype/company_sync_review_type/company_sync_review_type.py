@@ -9,7 +9,8 @@ from frappe.utils import now
 from sqlalchemy import text
 
 
-class CompanySyncStatusType(Document):
+class CompanySyncReviewType(Document):
+	
 	def db_insert(self, *args, **kwargs):
 		pass
 	
@@ -17,29 +18,41 @@ class CompanySyncStatusType(Document):
 		pass
 
 	def load_from_db(self):
-		[row] = self.get_status_type(name = self.name)
+		[row] = self.get_review_type(name = self.name)
 		#row.modified = now()
 		super(Document, self).__init__(row)
 
 	def db_update(self):
-		self.update_status_type(self.name)
+		self.update_review_type(self.name)
 
 	@staticmethod
-	def get_list(doctype, txt=None, searchfield=None, start=0,
-             page_length=20, filters=None, as_dict=False, reference_doctype=None):
-		# 1) Trae todos los registros del externo
-		rows = CompanySyncStatusType.get_status_type()
+	def get_list(
+		doctype,
+		txt=None,
+		searchfield=None,
+		start=0,
+		page_length=20,
+		filters=None,
+		as_list=False,               # <— acepta as_list
+		reference_doctype=None,
+		**kwargs
+	):
+		# 1) Saca TODOS los registros externos
+		rows = CompanySyncReviewType.get_review_type()
 
-		# 2) Filtra por texto si hace falta
+		# 2) Filtrado por texto, solo si txt no está vacío
 		if txt:
 			rows = [r for r in rows if txt.lower() in r["name"].lower()]
 
-		# 3) Paginación estándar
-		end = start + page_length
-		page = rows[start:end]
+		# 3) Paginación
+		page = rows[start : start + page_length]
 
-		# 4) Devuelve en el formato que Frappe espera
-		if as_dict:
+		# 4) Si vienen como lista (search_link pone as_list=True), devolver [[val, desc], …]
+		if as_list or reference_doctype:
+			return [[r["name"], r.get("error","")] for r in page]
+
+		# 5) En cualquier otro caso (list view, reportview) devolver dicts
+		if as_list:
 			# [{ name, error, creation, modified }, …]
 			return page
 		else:
@@ -55,7 +68,7 @@ class CompanySyncStatusType(Document):
 		pass
 	
 	@staticmethod
-	def get_status_type(name = None):
+	def get_review_type(name = None):
 		rows = []
 		if engine := get_engine():
 			# Usamos engine.begin() para commit automático
@@ -66,7 +79,7 @@ class CompanySyncStatusType(Document):
 					SELECT
 						name,
 						error
-					FROM company.status_type
+					FROM company.review_type
 				"""
 				params = {}
 					
@@ -92,9 +105,9 @@ class CompanySyncStatusType(Document):
 		return rows
 
 	@staticmethod
-	def update_status_type(name = None):
+	def update_review_type(name = None):
 		"""
-		Marca todas las filas de status_results cuya batch_name coincide,
+		Marca todas las filas de review_results cuya batch_name coincide,
 		escribiendo el texto de revisión.
 		"""
 		if engine := get_engine():
@@ -102,7 +115,7 @@ class CompanySyncStatusType(Document):
 			with engine.begin() as conn:
 				result = conn.execute(
 					text("""
-						UPDATE company.status_type
+						UPDATE company.review_type
 						SET error = NULL
 						WHERE name = :name
 					"""),

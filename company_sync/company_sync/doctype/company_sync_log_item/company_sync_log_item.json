@@ -9,7 +9,8 @@
   "sync_log",
   "id",
   "status",
-  "review"
+  "review",
+  "review2"
  ],
  "fields": [
   {
@@ -34,16 +35,23 @@
   },
   {
    "fieldname": "review",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Review"
+   "label": "Review",
+   "options": "Company Sync Review Type"
+  },
+  {
+   "fieldname": "review2",
+   "fieldtype": "Select",
+   "label": "Review2",
+   "options": "\nCreate Issue\nFuck"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-06-24 14:48:53.682482",
+ "modified": "2025-06-24 22:06:51.160405",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync Log Item",
