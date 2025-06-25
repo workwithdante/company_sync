@@ -41,7 +41,7 @@ class CompanySyncReviewType(Document):
 		reviews = CompanySyncReviewType.get_review_type()
 
 		if args.get("as_list"):
-			return [[d.get('name')] for d in reviews]
+			return [[r.get('name'), r.get("error", "")] for r in reviews]
 
 		return [d for d in reviews[start : start + page_length]]
 
