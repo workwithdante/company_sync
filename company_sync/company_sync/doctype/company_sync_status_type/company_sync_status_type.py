@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 # import frappe
-from company_sync.company_sync.doctype.company_sync_scheduler.database.engine import get_engine
+from company_sync.database.engine import get_engine
 import frappe
 from frappe.model.document import Document
 from frappe.utils import now
