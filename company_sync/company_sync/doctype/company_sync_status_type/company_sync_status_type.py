@@ -34,12 +34,24 @@ class CompanySyncStatusType(Document):
 		page_length = cint(args.get("limit_page_length")) or 20
 		order_by = args.get("order_by") or "process_date desc"
 
-		reviews = CompanySyncStatusType.get_status_type()
+		status = CompanySyncStatusType.get_status_type()
+  
+		  		#'filters' =[['Company Sync Review Type', 'status_type', 'in', 'Doesnt exist in crm']]
+		if filters:
+			for filter_item in filters:
+				doctype, field, operator, value = filter_item
+				# Aquí aplicaríamos el filtro, por ejemplo, a 'status_type' o cualquier otro campo
+				if doctype == "Company Sync Status Type" and field == "status_type":
+					# Filtrar 'status' por el campo 'status_type'
+					if operator == "in":
+						status = [r for r in status if r.get('name') in value]
+
+			return [frappe.get_doc(r) for r in status][0]
 
 		if args.get("as_list"):
-			return [[r.get('name'), r.get("error", "")] for r in reviews]
+			return [[r.get('name'), r.get("error", "")] for r in status]
 
-		return [d for d in reviews[start : start + page_length]]
+		return [d for d in status[start : start + page_length]]
 
 	@staticmethod
 	def get_count(args):
@@ -72,10 +84,15 @@ class CompanySyncStatusType(Document):
 				results = conn.execute(text(sql), params).fetchall()
 				for idx, r in enumerate(results, start=1):
 					rows.append({
+						"doctype": 'Company Sync Status Type',
+						"parent": 'Company Sync Register',
+						"owner": frappe.session.user,
+						"modified_by": frappe.session.user,
 						"name": r[0],
 						"error": r[1],
 						"creation": now(),
 						"modified": now(),
+						"status_type": r[0],
 						#"parent": r[1],
 						#"parenttype": "Company Sync Scheduler",
 						#"parentfield": "sync_log",

@@ -3,6 +3,7 @@
 
 # import frappe
 from company_sync.company_sync.doctype.company_sync_log.company_sync_log import CompanySyncLog
+import frappe
 from frappe.model.document import Document
 
 class CompanySyncLogItem(Document):
@@ -26,9 +27,7 @@ class CompanySyncLogItem(Document):
 		pass
 
 	def db_update(self):
-        # esto llamará al db_update de CompanySyncLog, que ahora
-        # encontrará self.sync_on y self.log_id válidos
-		CompanySyncLog(self).db_update()
+		super().db_update()
 
 	def validate(self):
 		"""

@@ -2,6 +2,7 @@
 import frappe
 # Import SQLAlchemy engine creation function
 from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
 
 def get_engine():
     """
@@ -36,10 +37,24 @@ def get_engine():
                     "connect_timeout": 10   # Tiempo de espera de conexión MySQL
                 }
             )
+            
+            with engine.connect() as conn:
+                frappe.logger().info("Conexión a la base de datos establecida correctamente.")
+        
             return engine
+        except OperationalError as e:
+            frappe.throw(str(e), exc=frappe.ValidationError, title="Error de conexión a la base de datos", wide=True, as_list=True, primary_action={
+                "label": "Verificar configuración",
+                "client_action": "frappe.set_route",
+				"args": ["Form", "Company Sync Settings"],
+            })
+            frappe.logger().error(f"Error de conexión a la base de datos: {e}")
+            return
         except Exception as e:
+            frappe.throw(f"Error al crear el motor de SQLAlchemy: {str(e)}", title="Error al crear el motor de SQLAlchemy")
             frappe.logger().error(f"Error al crear el motor de SQLAlchemy: {e}")
             return None
     else:
+        frappe.throw("No se pudo construir la cadena de conexión. El motor no se creó.")
         frappe.logger().error("No se pudo construir la cadena de conexión. El motor no se creó.")
         return None

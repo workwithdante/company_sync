@@ -13,6 +13,7 @@
   "broker",
   "sync_on",
   "section_log",
+  "status_log",
   "sync_log"
  ],
  "fields": [
@@ -70,12 +71,18 @@
    "fieldtype": "Table",
    "label": "Sync Log",
    "options": "Company Sync Log Item"
+  },
+  {
+   "fieldname": "status_log",
+   "fieldtype": "Table MultiSelect",
+   "label": "Status Log",
+   "options": "Company Sync Status Select"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-06-25 15:06:26.621416",
+ "modified": "2025-06-26 10:36:30.541275",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync Register",

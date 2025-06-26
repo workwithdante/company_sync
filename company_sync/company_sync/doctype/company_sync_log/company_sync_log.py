@@ -3,7 +3,7 @@
 
 # import frappe
 import json
-from typing import Self
+from typing import Counter, Self
 from company_sync.database.engine import get_engine
 import frappe
 from frappe.model.document import Document
@@ -67,9 +67,20 @@ class CompanySyncLog(Document):
 			log_name=log_name,
 			filters=[status_filter] if status_filter else []
 		)
+  
+		if args.get("as_list"):
+			# Convertir a lista de listas
+			return [[r.get('name'), r.get("status", ""), r.get("sync_on", ""), r.get("review", "")] for r in logs]
+
+		if args.get("linked_table_counter") == Counter():
+			total = len(logs)
+			return [
+				d | {"count": total}
+				for d in logs[start : start + page_length]
+			]
 
 		# Paginar manualmente
-		return [d.as_dict() for d in logs[start : start + page_length]]
+		return [d for d in logs[start : start + page_length]]
 
 	@staticmethod
 	def get_count(args):
@@ -80,7 +91,7 @@ class CompanySyncLog(Document):
 		pass
 	
 	@staticmethod
-	def get_sync_logs(batch_name=None, process_date=None, log_id=None, log_name=None, filters=[]):
+	def get_sync_logs(batch_name=None, process_date=None, log_id=None, log_name=None, filters=[], *args, **kwargs):
 		rows = []
 		if engine := get_engine():
 			# Usamos engine.begin() para commit automático
@@ -139,7 +150,7 @@ class CompanySyncLog(Document):
 		else:
 			frappe.throw("No hay conexión a la base de datos externa.")
 		
-		return [frappe.get_doc(row) for row in rows]
+		return rows
 
 	@staticmethod
 	@frappe.whitelist()
