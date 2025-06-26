@@ -12,9 +12,6 @@ from typing import Self
 
 
 class CompanySyncReviewType(Document):
-	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
-		self.translated_doctype = 1
 	def db_insert(self, *args, **kwargs):
 		pass
 	

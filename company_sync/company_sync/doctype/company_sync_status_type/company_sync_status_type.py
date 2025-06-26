@@ -2,10 +2,11 @@
 # For license information, please see license.txt
 
 # import frappe
+from typing import Self
 from company_sync.database.engine import get_engine
 import frappe
 from frappe.model.document import Document
-from frappe.utils import now
+from frappe.utils import cint, now
 from sqlalchemy import text
 
 
@@ -13,38 +14,32 @@ class CompanySyncStatusType(Document):
 	def db_insert(self, *args, **kwargs):
 		pass
 	
-	def delete(self):
+	def delete(self, ignore_permissions=False, force=False, *, delete_permanently=False):
 		pass
 
-	def load_from_db(self):
-		[row] = self.get_status_type(name = self.name)
+	def load_from_db(self) -> Self:
+		[row] = self.get_status_type(name=self.name)
 		#row.modified = now()
 		super(Document, self).__init__(row)
+
+		return self
 
 	def db_update(self):
 		self.update_status_type(self.name)
 
 	@staticmethod
-	def get_list(doctype, txt=None, searchfield=None, start=0,
-             page_length=20, filters=None, as_dict=False, reference_doctype=None):
-		# 1) Trae todos los registros del externo
-		rows = CompanySyncStatusType.get_status_type()
+	def get_list(args):
+		filters = args.get("filters") or {}
+		start = cint(args.get("limit_start")) or 0
+		page_length = cint(args.get("limit_page_length")) or 20
+		order_by = args.get("order_by") or "process_date desc"
 
-		# 2) Filtra por texto si hace falta
-		if txt:
-			rows = [r for r in rows if txt.lower() in r["name"].lower()]
+		reviews = CompanySyncStatusType.get_status_type()
 
-		# 3) Paginación estándar
-		end = start + page_length
-		page = rows[start:end]
+		if args.get("as_list"):
+			return [[r.get('name'), r.get("error", "")] for r in reviews]
 
-		# 4) Devuelve en el formato que Frappe espera
-		if as_dict:
-			# [{ name, error, creation, modified }, …]
-			return page
-		else:
-			# [[value, description], …]
-			return [[r["name"], r.get("error", "")] for r in page]
+		return [d for d in reviews[start : start + page_length]]
 
 	@staticmethod
 	def get_count(args):
