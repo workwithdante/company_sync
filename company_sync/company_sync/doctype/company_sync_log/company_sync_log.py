@@ -47,7 +47,11 @@ class CompanySyncLog(Document):
 
 	@staticmethod
 	def get_list(args):
-		filters = args.get("filters") or {}
+		raw_filters = args.get("filters") or {}
+
+		# Asegurar que filters sea un dict
+		filters = raw_filters if isinstance(raw_filters, dict) else {}
+  
 		start = cint(args.get("limit_start")) or 0
 		page_length = cint(args.get("limit_page_length")) or 20
 		order_by = args.get("order_by") or "process_date desc"

@@ -19,26 +19,9 @@ frappe.setup.on("before_load", function () {
 	company_sync.setup.slides_settings.map(frappe.setup.add_slide);
 });
 
-frappe.setup.on("complete", function () {
-	// Marcar como completado para company_sync
-	frappe.call({
-		method: "frappe.desk.page.setup_wizard.setup_wizard.set_setup_completed",
-		args: {
-			// tu nombre de app aquí
-			app: "company_sync",
-		},
-		callback: function () {
-			// marcar localmente en boot para evitar reentrada
-			if (!frappe.boot.setup_wizard_completed_apps) {
-				frappe.boot.setup_wizard_completed_apps = [];
-			}
-			frappe.boot.setup_wizard_completed_apps.push("company_sync");
-
-			frappe.set_route("desk");
-		},
-	});
+frappe.setup.on("complete", function() {
+  frappe.set_route("desk");
 });
-
 
 company_sync.setup.slides_settings = [
 	{
