@@ -21,9 +21,7 @@ frappe.ui.form.on("Company Sync Log Item", {
                 review: row.review
 			},
 		}).then((r) => {
-			/*if (r.message === true) {
-				frm.disable_save();
-			}*/
+			//frm.save()
 		});
     }
 });

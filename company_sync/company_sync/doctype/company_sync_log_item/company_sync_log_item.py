@@ -27,6 +27,7 @@ class CompanySyncLogItem(Document):
 		pass
 
 	def db_update(self):
+		self.review = "Paid"
 		super().db_update()
 
 	def validate(self):
