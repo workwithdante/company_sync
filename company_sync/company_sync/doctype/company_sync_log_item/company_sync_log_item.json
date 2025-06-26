@@ -24,13 +24,15 @@
    "fieldname": "id",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "ID"
+   "label": "ID",
+   "read_only": 1
   },
   {
    "fieldname": "status",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Status"
+   "label": "Status",
+   "read_only": 1
   },
   {
    "fieldname": "review",
@@ -44,7 +46,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-06-26 10:28:16.657417",
+ "modified": "2025-06-26 15:35:03.336475",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync Log Item",
