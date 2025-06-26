@@ -3,20 +3,21 @@ frappe.ui.form.on("Company Sync Log Item", {
         let row = locals[cdt][cdn];
 
         // Suponiendo que sync_on es algo como "2025-06-25 13:05:16.801642-1234"
-        let sync_on_str = row.sync_on;
+        let sync_log_str = row.sync_log;
+		let sync_on = row.sync_on;
 
         // Separar la cadena usando el último guion
-        let parts = sync_on_str.split('-');
+        let parts = sync_log_str.split('-');
         let log_id = parseInt(parts.pop());  // Obtener el valor después del último guion (log_id)
 
         // Ahora tienes el log_id y la fecha (sync_on_date)
         console.log("Log ID:", log_id);
-        console.log("Sync On Date:", sync_on_str);
+        console.log("Sync On Date:", sync_on);
 
         frm.call({
 			method: "update_sync_log",
 			args: { 
-				sync_on: sync_on_str,  // Pasar la fecha convertida
+				sync_on: sync_on,  // Pasar la fecha convertida
                 log_id: log_id,         // Pasar el log_id
                 review: row.review
 			},

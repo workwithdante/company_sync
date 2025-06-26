@@ -42,7 +42,7 @@ class CompanySyncRegister(Document):
 			frappe.get_doc({**row.as_dict(), "parent": self.name, "parent_doc": self})  # Asignamos los campos 'parent' y 'parent_doc'
 			for row in status_log  # Iteramos directamente sobre los resultados obtenidos
 		]"""
-		self.sync_log = [frappe.get_doc(row) for row in rows[50:70]]  # Limitar a los primeros 5 registros
+		self.sync_log = [frappe.get_doc(row) for row in rows[0:10]]  # Limitar a los primeros 5 registros
 
 @frappe.whitelist()
 def start_sync(company_sync_register: str):
