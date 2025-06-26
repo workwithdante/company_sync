@@ -1,6 +1,8 @@
 # File: company_sync/logging_config.py
 import logging
-from company_sync.company_sync.doctype.company_sync_scheduler.syncer.handlers.csv_handler import CSVHandler  # Se asume que CSVHandler está implementado
+
+from company_sync.syncer.handler import CSVHandler
+  # Se asume que CSVHandler está implementado
 
 def setup_logging(log_file='problems.csv'):
     logger = logging.getLogger('company_sync')
