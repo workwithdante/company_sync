@@ -28,13 +28,30 @@ frappe.ui.form.on("Company Sync Log Item", {
 });
 
 frappe.ui.form.on("Company Sync Register", {
-	onload(frm) {
+	onload_post_render(frm) {
+		const $f = $(frm.wrapper);
+		const linkSelector = ".grid-row input[data-fieldname='review'], .grid-row input[data-fieldname='status']";
+
+		if (!$f.data("_sync_log_listener")) {
+			$f.data("_sync_log_listener", true);
+
+			// englobamos todos los posibles "confirmar valor"
+			$f.on(
+				"awesomplete-selectcomplete change blur input",
+				linkSelector,
+				function(e) {
+				console.log("Evento", e.type, "en", e.target.dataset.fieldname);
+				frm.trigger("status_log");
+				}
+			);
+		}
+
 		if (!frm.is_new() || !frm._has_shown_log) {
 			frm.toggle_display("section_log", true);
 			frm._has_shown_log = true;
 		}
 
-		if (frm.doc.sync_log && !frm._sync_init_done) {
+		/*if (frm.doc.sync_log && !frm._sync_init_done) {
 			const sync_log = frm.doc.sync_log || [];
 			frm.clear_table('sync_log');
 			sync_log.forEach(d => {
@@ -44,48 +61,119 @@ frappe.ui.form.on("Company Sync Register", {
 				row.review = d.review;
 				row.status = d.status;
 				row.sync_on = d.sync_on;
+				row.crm = d.crm;
+				row.csv = d.csv;
 			});
 			frm.refresh_field('sync_log');
 			frm._sync_init_done = true;
-		}
+		}*/
 
 		frm.trigger("status_log");
+		frm.trigger("update_primary_action");
+	},
+
+	render_complete(frm) {
+		const $f = $(frm.wrapper);
+		const linkSelector = ".grid-row input[data-fieldname='review'], .grid-row input[data-fieldname='status']";
+
+		if (!$f.data("_sync_log_listener")) {
+			$f.data("_sync_log_listener", true);
+
+			// englobamos todos los posibles "confirmar valor"
+			$f.on(
+				"awesomplete-selectcomplete change blur input",
+				linkSelector,
+				function(e) {
+				console.log("Evento", e.type, "en", e.target.dataset.fieldname);
+				frm.trigger("status_log");
+				}
+			);
+		}
+
+		const $wrapper = $(frm.fields_dict.sync_log.grid.parent);
+
+		// 2) Delegamos el 'change' a TODOS los review que vivan dentro
+		$wrapper.on("change", 'input[data-fieldname="review"]', function() {
+		console.log("Review changed →", this.value);
+		frm.trigger("status_log");
+		});
+
+		const grid = frm.fields_dict.sync_log.grid;
+		const tabulator = grid.grid_sortable;  // la instancia de Tabulator
+		const $wrapper2 = $(grid.parent);
+
+		// Ahora sí puedo delegar sin miedo a que Tabulator re-pinte después
+		$wrapper2.on("change", 'input[data-fieldname="review"]', function() {
+			console.log("Review cambió →", this.value);
+			frm.trigger("status_log");
+		});
+
+		// Solo lo enganchamos una vez
+		if (tabulator && !grid._has_cell_edited_listener) {
+			grid._has_cell_edited_listener = true;
+
+			tabulator.on("cellEdited", (cell) => {
+				// field name
+				const field = cell.getColumn().getField();
+				// nuevo valor
+				const value = cell.getValue();
+				console.log(`Field "${field}" edited →`, value);
+
+				// tu filtrado
+				frm.trigger("status_log");
+			});
+		}
+
+		if (!frm.is_new() || !frm._has_shown_log) {
+			frm.toggle_display("section_log", true);
+			frm._has_shown_log = true;
+		}
+
+		/*if (frm.doc.sync_log && !frm._sync_init_done) {
+			const sync_log = frm.doc.sync_log || [];
+			frm.clear_table('sync_log');
+			sync_log.forEach(d => {
+				let row = frm.add_child('sync_log');
+				row.sync_log = d.name;
+				row.id = d.id;
+				row.review = d.review;
+				row.status = d.status;
+				row.sync_on = d.sync_on;
+				row.crm = d.crm;
+				row.csv = d.csv;
+			});
+			frm.refresh_field('sync_log');
+			frm._sync_init_done = true;
+		}*/
+
+		frm.trigger("status_log");
+		frm.trigger("update_primary_action");
 	},
 
 	status_log(frm) {
-		// Obtener los valores seleccionados en el multiselect del padre
-		const selected_statuses = (frm.doc.status_log || []).map(row => row.status_type);
+		// Obtenemos los status_type seleccionados
+		const selected = (frm.doc.status_log || []).map(r => r.status_type);
 
-		// Contar las filas visibles
-		let visible_rows = 0;
+		const dt = frm._sync_datatable;
+		if (!dt) return;
 
-		// Recorremos todas las filas y ocultamos las que no coincidan
-		frm.fields_dict.sync_log.grid.grid_rows.forEach(row => {
-			const visible = selected_statuses.length === 0 || selected_statuses.includes(row.doc.status);
-			// Cambiamos el estado del estilo de display de las filas
-			$(row.row).toggle(visible); // Oculta o muestra la fila
-			if (visible) {
-				visible_rows++;
-			}
+		// 1) Limpiamos cualquier filtro previo
+		dt.clearFilter(true);
+
+		// 2) Si no hay selección, mostramos todo; si no, filtramos por status
+		if (selected.length) {
+		dt.setFilter(row => {
+			// row es un RowComponent de Tabulator
+			const status = row.getValue("status");
+			return selected.includes(status);
 		});
-
-		// Verificamos si hay filas visibles
-		const gridBody = frm.fields_dict.sync_log.grid.wrapper.find(".grid-body");
-
-		if (visible_rows === 0) {
-			// Si no hay filas visibles, mostramos el mensaje "No Data"
-			const gridEmpty = gridBody.find(".grid-empty");
-			gridEmpty.removeClass("hidden");  // Elimina la clase "hidden"
-			gridEmpty.show();  // Asegura que el mensaje "No Data" se muestra
-		} else {
-			// Si hay filas visibles, ocultamos el mensaje "No Data"
-			gridBody.find(".grid-empty").hide();
 		}
 	},
 
 	refresh(frm) {
 		// Aplica el filtro al cargar también
 		frm.trigger("status_log");
+		frm.trigger("update_primary_action");
 	},
 
 	update_primary_action(frm) {

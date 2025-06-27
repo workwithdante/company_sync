@@ -119,16 +119,23 @@ class CompanySyncLog(Document):
 					process_date = process_date if process_date else datetime.fromisoformat(log_name.rsplit('-', 1)[0])
 					log_id = log_id if log_id else log_name.rsplit('-', 1)[1]
 					
-				if process_date and log_id:
-					sql += " WHERE process_date = :process_date AND id = :log_id"
-					params = {"process_date": process_date, "log_id": log_id}
-					if filters:
-						sql += " AND status IN :filters"
+				if process_date:
+					sql += " WHERE process_date = :process_date"
+					params["process_date"] = process_date
+		 
+					if log_id:
+						sql += " AND id = :log_id"
+						params["log_id"] = log_id
+		
+						if filters:
+							sql += " AND status IN :filters"
+							params["filters"] = filters
+       
 				elif filters:
 					sql += " WHERE status IN :filters"
 					params["filters"] = tuple(filters)
 					
-				sql += " ORDER BY process_date"
+				sql += " ORDER BY status"
 
 				results = conn.execute(text(sql), params).fetchall()
 				for idx, r in enumerate(results, start=1):

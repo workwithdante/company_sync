@@ -29,7 +29,8 @@ class SyncProcessor:
         try:
             if engine := get_engine():
                 with engine.connect() as conn:
-                    conn.execute(text(f'DROP TABLE IF EXISTS "{self.db_name}"."temp" CASCADE'))
+                    conn.execute(text(f'TRUNCATE TABLE {self.db_name}.temp RESTART IDENTITY;'))
+                    conn.commit()
                     
                 df.to_sql(
                     name='temp',
@@ -39,8 +40,10 @@ class SyncProcessor:
                     index=False,
                     chunksize=1000
                 )
+                frappe.msgprint(_(f"DataFrame successfully written to '{self.db_name}.temp' table."), title=_("Import Successfully")) 
                 frappe.logger().info(f"DataFrame successfully written to '{self.db_name}' table.")
             else:
+                frappe.throw(_("Database engine is not initialized."), title=_("Cannot write DataFrame")) 
                 frappe.logger().error("Database engine is not initialized. Cannot write DataFrame.")
         except Exception as e:
             frappe.throw(_("Failed to write DataFrame to the database."), title=_("Database Write Error"))            

@@ -29,29 +29,46 @@ class CompanySyncStatusType(Document):
 
 	@staticmethod
 	def get_list(args):
-		filters = args.get("filters") or {}
-		start = cint(args.get("limit_start")) or 0
-		page_length = cint(args.get("limit_page_length")) or 20
-		order_by = args.get("order_by") or "process_date desc"
+		# 1. Recoge y normaliza los argumentos
+		filters      = args.get("filters") or []
+		start        = cint(args.get("limit_start")) or 0
+		page_length  = cint(args.get("limit_page_length")) or 20
+		as_list      = args.get("as_list")
 
+		# 2. Carga todo el catálogo de status (tu lista de dicts)
 		status = CompanySyncStatusType.get_status_type()
-  
-		  		#'filters' =[['Company Sync Review Type', 'status_type', 'in', 'Doesnt exist in crm']]
+
+		# 3. Aplica cada filtro sobre esa lista
+		for doctype, field, operator, value in filters:
+			if doctype != "Company Sync Status Type":
+				continue
+
+			if field == "name":
+				if operator.lower() == "in":
+					status = [r for r in status if r.get("name") in value]
+				elif operator in ("=", "=="):
+					status = [r for r in status if r.get("name") == value]
+
+			elif field == "error":
+				# value aquí es 1 o True
+				flag = bool(value)
+				if operator in ("=", "=="):
+					status = [r for r in status if bool(r.get("error")) is flag]
+				elif operator.lower() == "in":
+					status = [r for r in status if bool(r.get("error")) in value]
+
+		# 4. Si as_list, devolvemos pares [name, error]
+		if as_list:
+			return [[r["name"], r.get("error", False)] for r in status]
+
+		# 5. Si tenemos filtros, devolvemos todos los docs filtrados
 		if filters:
-			for filter_item in filters:
-				doctype, field, operator, value = filter_item
-				# Aquí aplicaríamos el filtro, por ejemplo, a 'status_type' o cualquier otro campo
-				if doctype == "Company Sync Status Type" and field == "status_type":
-					# Filtrar 'status' por el campo 'status_type'
-					if operator == "in":
-						status = [r for r in status if r.get('name') in value]
+			return [frappe.get_doc(r) for r in status]
 
-			return [frappe.get_doc(r) for r in status][0]
-
-		if args.get("as_list"):
-			return [[r.get('name'), r.get("error", "")] for r in status]
-
-		return [d for d in status[start : start + page_length]]
+		# 6. Si no hay filtros, aplicamos paginación y orden
+		ordered = sorted(status, key=lambda r: r.get("name"))  # o tu propio order_by
+		page    = ordered[start : start + page_length]
+		return [frappe.get_doc(r) for r in page]
 
 	@staticmethod
 	def get_count(args):
