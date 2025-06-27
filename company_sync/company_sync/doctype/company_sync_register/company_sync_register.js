@@ -29,21 +29,22 @@ frappe.ui.form.on("Company Sync Log Item", {
 
 frappe.ui.form.on("Company Sync Register", {
 	onload_post_render(frm) {
-		const $f = $(frm.wrapper);
-		const linkSelector = ".grid-row input[data-fieldname='review'], .grid-row input[data-fieldname='status']";
+		const $wrapper = $(frm.fields_dict.sync_log.grid.control.wrapper);
+		const selector = 'input[data-fieldname="review"]';
 
-		if (!$f.data("_sync_log_listener")) {
-			$f.data("_sync_log_listener", true);
+		if (!$wrapper.data("listener-added")) {
+		$wrapper.data("listener-added", true);
 
-			// englobamos todos los posibles "confirmar valor"
-			$f.on(
-				"awesomplete-selectcomplete change blur input",
-				linkSelector,
-				function(e) {
-				console.log("Evento", e.type, "en", e.target.dataset.fieldname);
+		// Enganchamos awesomplete-selectcomplete y también input
+		// para poder detectar cuando el usuario borra con la "×"
+		$wrapper.on("awesomplete-selectcomplete input", selector, function(e) {
+			const val = this.value;
+			// Solo disparar en awesomplete-selectcomplete O cuando el valor quede vacío
+			if (e.type === "awesomplete-selectcomplete" || (e.type === "input" && !val)) {
+				console.log(`Evento ${e.type} en review → "${val}"`);
 				frm.trigger("status_log");
-				}
-			);
+			}
+		});
 		}
 
 		if (!frm.is_new() || !frm._has_shown_log) {
