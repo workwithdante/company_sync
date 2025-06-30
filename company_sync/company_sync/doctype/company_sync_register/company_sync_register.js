@@ -1,127 +1,54 @@
-frappe.ui.form.on("Company Sync Log Item", {
-	review(frm, cdt, cdn) {
-        let row = locals[cdt][cdn];
-
-        // Suponiendo que sync_on es algo como "2025-06-25 13:05:16.801642-1234"
-        let sync_log_str = row.sync_log;
-		let sync_on = row.sync_on;
-
-        // Separar la cadena usando el último guion
-        let parts = sync_log_str.split('-');
-        let log_id = parseInt(parts.pop());  // Obtener el valor después del último guion (log_id)
-
-        // Ahora tienes el log_id y la fecha (sync_on_date)
-        console.log("Log ID:", log_id);
-        console.log("Sync On Date:", sync_on);
-
-        frm.call({
-			method: "update_sync_log",
-			args: { 
-				sync_on: sync_on,  // Pasar la fecha convertida
-                log_id: log_id,         // Pasar el log_id
-                review: row.review
-			},
-		}).then((r) => {
-			//frm.save()
-		});
-    }
-});
-
 frappe.ui.form.on("Company Sync Register", {
+	setup(frm) {
+		if (frm.is_new() || !frm._has_shown_log) {
+			frm.toggle_display("section_log", false);
+			frm._has_shown_log = false;
+		}
+	},
+
 	onload_post_render(frm) {
+		const $inp   = $(this);
 		const $wrapper = $(frm.fields_dict.sync_log.grid.control.wrapper);
 		const selector = 'input[data-fieldname="review"]';
 
 		if (!$wrapper.data("listener-added")) {
-		$wrapper.data("listener-added", true);
+			$wrapper.data("listener-added", true);
 
-		// Enganchamos awesomplete-selectcomplete y también input
-		// para poder detectar cuando el usuario borra con la "×"
-		$wrapper.on("awesomplete-selectcomplete input", selector, function(e) {
-			const val = this.value;
-			// Solo disparar en awesomplete-selectcomplete O cuando el valor quede vacío
-			if (e.type === "awesomplete-selectcomplete" || (e.type === "input" && !val)) {
-				console.log(`Evento ${e.type} en review → "${val}"`);
-				frm.trigger("status_log");
-			}
-		});
-		}
+			$wrapper.on("awesomplete-selectcomplete input", selector, function(e) {
+				const $inp    = $(this);
+				const oldVal  = $inp.data("priorValue") || "";
+				const newVal  = this.value;
 
-		if (!frm.is_new() || !frm._has_shown_log) {
-			frm.toggle_display("section_log", true);
-			frm._has_shown_log = true;
-		}
+				// Guarda ya el nuevo valor para la próxima vez
+				$inp.data("priorValue", newVal);
 
-		/*if (frm.doc.sync_log && !frm._sync_init_done) {
-			const sync_log = frm.doc.sync_log || [];
-			frm.clear_table('sync_log');
-			sync_log.forEach(d => {
-				let row = frm.add_child('sync_log');
-				row.sync_log = d.name;
-				row.id = d.id;
-				row.review = d.review;
-				row.status = d.status;
-				row.sync_on = d.sync_on;
-				row.crm = d.crm;
-				row.csv = d.csv;
-			});
-			frm.refresh_field('sync_log');
-			frm._sync_init_done = true;
-		}*/
-
-		frm.trigger("status_log");
-		frm.trigger("update_primary_action");
-	},
-
-	render_complete(frm) {
-		const $f = $(frm.wrapper);
-		const linkSelector = ".grid-row input[data-fieldname='review'], .grid-row input[data-fieldname='status']";
-
-		if (!$f.data("_sync_log_listener")) {
-			$f.data("_sync_log_listener", true);
-
-			// englobamos todos los posibles "confirmar valor"
-			$f.on(
-				"awesomplete-selectcomplete change blur input",
-				linkSelector,
-				function(e) {
-				console.log("Evento", e.type, "en", e.target.dataset.fieldname);
-				frm.trigger("status_log");
+				// Si antes y ahora estaban vacíos, no hacemos nada
+				if (oldVal === "" && newVal === "") {
+				return;
 				}
-			);
-		}
 
-		const $wrapper = $(frm.fields_dict.sync_log.grid.parent);
+				// Disparamos solo si realmente cambió, y en los casos que quieras:
+				//  • awesomplete-selectcomplete (selección)
+				//  • input dejando el campo en blanco (newVal === "")
+				if (newVal !== oldVal && 
+					(e.type === "awesomplete-selectcomplete" || (e.type === "input" && newVal === ""))) {
+					const $row   = $inp.closest('.grid-row');
+					const log_id    = parseInt($row.attr('data-idx'), 10);
+					const creation = frm.doc.creation;
 
-		// 2) Delegamos el 'change' a TODOS los review que vivan dentro
-		$wrapper.on("change", 'input[data-fieldname="review"]', function() {
-		console.log("Review changed →", this.value);
-		frm.trigger("status_log");
-		});
-
-		const grid = frm.fields_dict.sync_log.grid;
-		const tabulator = grid.grid_sortable;  // la instancia de Tabulator
-		const $wrapper2 = $(grid.parent);
-
-		// Ahora sí puedo delegar sin miedo a que Tabulator re-pinte después
-		$wrapper2.on("change", 'input[data-fieldname="review"]', function() {
-			console.log("Review cambió →", this.value);
-			frm.trigger("status_log");
-		});
-
-		// Solo lo enganchamos una vez
-		if (tabulator && !grid._has_cell_edited_listener) {
-			grid._has_cell_edited_listener = true;
-
-			tabulator.on("cellEdited", (cell) => {
-				// field name
-				const field = cell.getColumn().getField();
-				// nuevo valor
-				const value = cell.getValue();
-				console.log(`Field "${field}" edited →`, value);
-
-				// tu filtrado
-				frm.trigger("status_log");
+					frm.call({
+						method: "update_sync_log",
+						args: { 
+							sync_on: creation,  // Pasar la fecha convertida
+							log_id: log_id,         // Pasar el log_id
+							review: newVal
+						},
+					}).then((r) => {
+						console.log("Update");
+						//frm.save()
+					});
+					frm.trigger("status_log");
+				}
 			});
 		}
 
@@ -129,23 +56,6 @@ frappe.ui.form.on("Company Sync Register", {
 			frm.toggle_display("section_log", true);
 			frm._has_shown_log = true;
 		}
-
-		/*if (frm.doc.sync_log && !frm._sync_init_done) {
-			const sync_log = frm.doc.sync_log || [];
-			frm.clear_table('sync_log');
-			sync_log.forEach(d => {
-				let row = frm.add_child('sync_log');
-				row.sync_log = d.name;
-				row.id = d.id;
-				row.review = d.review;
-				row.status = d.status;
-				row.sync_on = d.sync_on;
-				row.crm = d.crm;
-				row.csv = d.csv;
-			});
-			frm.refresh_field('sync_log');
-			frm._sync_init_done = true;
-		}*/
 
 		frm.trigger("status_log");
 		frm.trigger("update_primary_action");

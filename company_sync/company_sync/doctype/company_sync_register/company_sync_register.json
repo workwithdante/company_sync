@@ -8,10 +8,9 @@
  "field_order": [
   "company",
   "csv_file",
-  "status",
   "column_break_khlg",
   "broker",
-  "sync_on",
+  "status",
   "section_log",
   "status_log",
   "sync_log"
@@ -33,15 +32,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "hidden": 1,
-   "label": "Status",
-   "no_copy": 1,
-   "options": "Pending\nSuccess\nPartial Success\nError\nTimed Out",
-   "read_only": 1
-  },
-  {
    "fieldname": "column_break_khlg",
    "fieldtype": "Column Break"
   },
@@ -54,12 +44,6 @@
    "options": "Contact",
    "reqd": 1,
    "set_only_once": 1
-  },
-  {
-   "fieldname": "sync_on",
-   "fieldtype": "Data",
-   "label": "Sync on",
-   "read_only": 1
   },
   {
    "fieldname": "section_log",
@@ -77,12 +61,20 @@
    "fieldtype": "Table MultiSelect",
    "label": "Status Log",
    "options": "Company Sync Status Select"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Pending\nSuccess\nPartial Success\nError\nTimed Out"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-06-26 14:42:54.587536",
+ "modified": "2025-06-30 12:17:55.663780",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync Register",

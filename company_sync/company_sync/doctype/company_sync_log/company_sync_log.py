@@ -135,7 +135,7 @@ class CompanySyncLog(Document):
 					sql += " WHERE status IN :filters"
 					params["filters"] = tuple(filters)
 					
-				sql += " ORDER BY status"
+				sql += " ORDER BY id"
 
 				results = conn.execute(text(sql), params).fetchall()
 				for idx, r in enumerate(results, start=1):
@@ -144,6 +144,7 @@ class CompanySyncLog(Document):
 					rows.append({
 						"doctype": "Company Sync Log",
 						"id": csv_json.get('member_id') or crm_json.get('so_no'),
+						"idx": r[0],
 						"log_id": r[0],
 						"sync_on": r[2],
 						"status": r[3],
