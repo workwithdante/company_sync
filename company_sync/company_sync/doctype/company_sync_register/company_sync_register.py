@@ -1,6 +1,7 @@
 # Copyright (c) 2025, Dante Devenir and contributors
 # For license information, please see license.txt
 
+from typing import OrderedDict
 from company_sync.company_sync.doctype.company_sync_log.company_sync_log import CompanySyncLog
 import frappe
 from company_sync.syncer.syncer import Syncer
@@ -19,59 +20,43 @@ class CompanySyncRegister(Document):
 		csv_file: DF.Attach
 		status_type: DF.TableMultiSelect
 		status_log: DF.Table
+  
+	def before_insert(self):
+		"""Se ejecuta únicamente *antes* de la primera inserción en la BD."""
+		self._populate_status_log()
+
+	def _populate_status_log(self):
+		# 1) Trae todos los tipos con error=1 de golpe
+		error_statuses = set(frappe.get_all(
+			"Company Sync Status Type",
+			filters={"error": 1},
+			pluck="name"
+		))
+
+		# 2) Lleva un set de los que ya añadiste (para no duplicar)
+		existing = set()
+
+		# 3) Recorre UNA vez los logs y añade el hijo la primera vez que ve cada status
+		for row in CompanySyncLog.get_sync_logs(batch_name=self.name):
+			status = row["status"]
+			if status in error_statuses and status not in existing:
+				self.append("status_log", {"status_type": status})
+				existing.add(status)
 	
 	def onload(self):
-		filters = []
+		"""
+		En onload sólo levantamos `sync_log` desde la BD, 
+		y dejamos que el framework muestre los status_log que ya creó before_insert.
+		"""
+		# Arma filtros según lo que el usuario guardó en status_log
+		filters = [d.status_type for d in (self.status_log or [])]
 
-		if getattr(self, "status_type", None):
-			# Si es una lista de dicts (por ejemplo, un Table MultiSelect)
-			if isinstance(self.status_type, list):
-				filters = [row.get("status_type") for row in self.status_type]
-			else:
-				# Si es solo un string (campo Link o Select)
-				filters = [self.status_type]
-	
+		# Consulta los logs (ya no tocamos status_log aquí)
 		rows = CompanySyncLog.get_sync_logs(batch_name=self.name, filters=filters)
 
-		# 2) Únicos en orden
-		all_statuses = [r.get("status") for r in rows]
-		status_labels = list(dict.fromkeys(all_statuses))
+		# Sólo levanta sync_log para el UI
+		self.sync_log = [frappe.get_doc(r) for r in rows]
 
-		# 3) Consulta en bloque cuáles Status Type tienen error=True
-		types_with_error = frappe.db.get_list(
-			"Company Sync Status Type",
-			filters={
-				"name": ["in", status_labels],
-				"error": 1
-			},
-			pluck="name"
-		)
-		#error_set = set(types_with_error if isinstance(types_with_error, list) else [types_with_error] )
-		error_set = { doc.name for doc in types_with_error }
-
-		# Mantén el orden original pero solo los que están en error_set
-		filtered_labels = [s for s in status_labels if s in error_set]
-
-		# 4) Reemplaza en memoria status_log antes de pintar
-		existing = { child.status_type for child in self.status_log }
-
-		# 3) Creamos e insertamos cada child row
-		for label in filtered_labels:
-			if label in existing:
-				continue
-
-			child = frappe.get_doc({
-				"doctype":     "Company Sync Status Select",
-				"status_type": label,
-				"parent":      self.name,
-				"parentfield": "status_log",
-				"parenttype":  "Company Sync Register"
-			}).insert(ignore_permissions=True)
-
-			# 4) Lo agregamos a la lista en memoria para que el cliente lo vea inmediatamente
-			self.status_log.append(child)
-			
-		self.sync_log = [frappe.get_doc(row) for row in rows] 
 
 @frappe.whitelist()
 def start_sync(company_sync_register: str):

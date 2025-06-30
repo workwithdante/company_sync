@@ -123,16 +123,12 @@ class CompanySyncLog(Document):
 					sql += " WHERE process_date = :process_date"
 					params["process_date"] = process_date
 		 
-					if log_id:
-						sql += " AND id = :log_id"
-						params["log_id"] = log_id
-		
-						if filters:
-							sql += " AND status IN :filters"
-							params["filters"] = filters
-       
-				elif filters:
-					sql += " WHERE status IN :filters"
+				if log_id:
+					sql += " AND id = :log_id"
+					params["log_id"] = log_id
+	
+				if filters:
+					sql += " AND status IN :filters"
 					params["filters"] = tuple(filters)
 					
 				sql += " ORDER BY id"
@@ -178,6 +174,7 @@ class CompanySyncLog(Document):
 					"""),
 					{"process_date": sync_on, "log_id": log_id, "review": review}
 				)
+			print("HEre")
 		else:
 			frappe.throw("No hay conexión a la base de datos externa.")
 		
