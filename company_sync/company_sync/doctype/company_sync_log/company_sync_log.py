@@ -157,7 +157,7 @@ class CompanySyncLog(Document):
 						"creation": r[2],
 						"modified": r[2],
 						"review": r[6] or "",
-						"description": r[7]
+						"description": r[7] or "",
 					})
 		else:
 			frappe.throw("No hay conexión a la base de datos externa.")
@@ -177,14 +177,14 @@ class CompanySyncLog(Document):
 				sql = "UPDATE company.status_results"
 				params = {"process_date": sync_on, "log_id": log_id}
     
-				if review and description:
+				if review is not None and description is not None:
 					return
     
-				if review:
+				if review is not None:
 					sql += " SET review = :review"
 					params['review'] = review
      
-				if description:
+				if description is not None:
 					sql += " SET description = :description"
 					params['description'] = description
 

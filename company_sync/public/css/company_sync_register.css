@@ -1,3 +1,7 @@
 [data-fieldname="sync_log"] .row-check {
   display: none !important;
 }
+
+[data-fieldname="sync_log"] .grid-heading-row {
+  height: 32px;
+}

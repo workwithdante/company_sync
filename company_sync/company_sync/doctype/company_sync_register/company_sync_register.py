@@ -1,7 +1,6 @@
 # Copyright (c) 2025, Dante Devenir and contributors
 # For license information, please see license.txt
 
-from typing import OrderedDict
 from company_sync.company_sync.doctype.company_sync_log.company_sync_log import CompanySyncLog
 import frappe
 from company_sync.syncer.syncer import Syncer
@@ -23,6 +22,7 @@ class CompanySyncRegister(Document):
 	
 	def onload(self):
 		filters = []
+		self.sync_log = []
 		
 		# 1) Trae todas las Status Type que tienen error=1 (sin mirar rows)
 		raw = frappe.get_all(
@@ -46,22 +46,25 @@ class CompanySyncRegister(Document):
 			if status not in error_statuses | existing:
 				continue
 
-			# 4b) Si es la primera vez que aparece, creamos el child
 			if status not in existing:
-				child = frappe.get_doc({
-					"doctype":     "Company Sync Status Select",
-					"status_type": status,
-					"parent":      self.name,
-					"parentfield": "status_log",
-					"parenttype":  "Company Sync Register"
-				}).insert(ignore_permissions=True)
-				self.status_log.append(child)
+				self.append("status_log", {
+					"status_type": status
+				})
 				existing.add(status)
 
 			# 4c) Añadimos ese row a sync_log
-			self.sync_log.append(frappe.get_doc(row))
-
-@frappe.whitelist()
+			self.append("sync_log", {
+       			#"id":           row["id"],
+                #"idx":           row["idx"],
+                #"log_id": 		row["idx"],
+                "status":       status,
+                "csv":			row["csv"],
+                "crm":			row["crm"],
+                "review":       row.get("review", ""),
+                "description":  row.get("description", ""),
+                "sync_on":      row["sync_on"],
+            })
+   
 def start_sync(company_sync_register: str):
 	from typing import cast
 	# Start sync from form
@@ -70,8 +73,8 @@ def start_sync(company_sync_register: str):
 @frappe.whitelist()
 def update_sync_log(sync_on: str, log_id: int, review = None, description = None):
 	sync_on_localtime = datetime.fromisoformat(sync_on)
-	if review:
+	if review is not None:
 		CompanySyncLog.update_sync_log(sync_on_localtime, log_id, review=review)
 	
-	if description:
+	if description is not None:
 		CompanySyncLog.update_sync_log(sync_on_localtime, log_id, description=description)

@@ -5,7 +5,7 @@
    "label": "Sync Error Logs"
   }
  ],
- "content": "[{\"id\":\"IWXTiXi7KK\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Sync Error Logs\",\"col\":12}},{\"id\":\"mrDEL4UgQK\",\"type\":\"card\",\"data\":{\"card_name\":\"Storage\",\"col\":4}},{\"id\":\"CA-gxM4FvX\",\"type\":\"card\",\"data\":{\"card_name\":\"Core\",\"col\":4}}]",
+ "content": "[{\"id\":\"IWXTiXi7KK\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Sync Error Logs\",\"col\":12}},{\"id\":\"cCcZ4uoq7X\",\"type\":\"card\",\"data\":{\"card_name\":\"History\",\"col\":4}},{\"id\":\"8yYPdDrF6h\",\"type\":\"card\",\"data\":{\"card_name\":\"Config\",\"col\":4}}]",
  "creation": "2023-06-22 20:12:29.687295",
  "custom_blocks": [],
  "docstatus": 0,
@@ -20,9 +20,18 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Syncer",
+   "label": "History",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Register",
    "link_count": 0,
-   "link_to": "Company Sync Scheduler",
+   "link_to": "Company Sync Register",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -40,7 +49,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Core",
+   "label": "Config",
    "link_count": 1,
    "link_type": "DocType",
    "onboard": 0,
@@ -49,34 +58,15 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Settings",
+   "label": "Connection Settings",
    "link_count": 0,
    "link_to": "Company Sync Settings",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Storage",
-   "link_count": 1,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Company Sync",
-   "link_count": 0,
-   "link_to": "Company Sync Register",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
   }
  ],
- "modified": "2025-06-25 08:29:12.099647",
+ "modified": "2025-07-01 09:55:32.360682",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync",

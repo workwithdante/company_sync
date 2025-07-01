@@ -48,13 +48,13 @@ class Syncer:
 		except JobTimeoutException:
 			# Handle timeout
 			frappe.db.rollback()
-			doc = frappe.get_doc("Company Sync register", str(self.register.name))
+			doc = frappe.get_doc("Company Sync Register", str(self.register.name))
 			doc.db_set("status", "Timed Out")
 		except Exception as e:
 			# Handle general errors
-			self.progress_observer.updateError(f"Sync error: {str(e)}", {'register.name': self.register.name, "doctype": "Company Sync register"}, event="company_sync_error_log", after_commit=False)
+			self.progress_observer.updateError(f"Sync error: {str(e)}", {'register.name': self.register.name, "doctype": "Company Sync Register"}, event="company_sync_error_log", after_commit=False)
 			frappe.db.rollback()
-			doc = frappe.get_doc("Company Sync register", str(self.register.name))
+			doc = frappe.get_doc("Company Sync Register", str(self.register.name))
 			doc.db_set("status", "Error")
 			doc.log_error("Company Sync failed")
 		finally:
@@ -62,8 +62,8 @@ class Syncer:
 			frappe.flags.in_import = False
 			#frappe.realtime()
 			#frappe.db.commit
-		doc = frappe.get_doc("Company Sync register", str(self.register.name))
-		doc.db_set("status", "Success")
+			doc = frappe.get_doc("Company Sync Register", str(self.register.name))
+			doc.db_set("status", "Success")
 	
 	def worker(self):
 		# Import register status check

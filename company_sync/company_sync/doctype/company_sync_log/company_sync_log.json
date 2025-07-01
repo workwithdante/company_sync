@@ -12,7 +12,8 @@
   "status",
   "crm",
   "csv",
-  "review"
+  "review",
+  "description"
  ],
  "fields": [
   {
@@ -67,12 +68,18 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Sync On"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description"
   }
  ],
  "in_create": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-06-26 14:43:12.617220",
+ "modified": "2025-07-01 08:46:07.663836",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync Log",
