@@ -12,7 +12,6 @@
   "broker",
   "status",
   "section_log",
-  "sql_output",
   "status_log",
   "sync_log"
  ],
@@ -70,18 +69,13 @@
    "label": "Status",
    "no_copy": 1,
    "options": "Pending\nSuccess\nPartial Success\nError\nTimed Out"
-  },
-  {
-   "fieldname": "sql_output",
-   "fieldtype": "HTML",
-   "label": "SQL Output",
-   "read_only": 1
   }
  ],
  "grid_page_length": 50,
+ "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-01 12:46:47.991348",
+ "modified": "2025-07-01 16:00:03.355877",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync Register",
@@ -101,6 +95,7 @@
    "write": 1
   }
  ],
+ "quick_entry": 1,
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",

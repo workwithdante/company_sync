@@ -15,6 +15,25 @@ frappe.ui.form.on("Company Sync Log Item", {
   }
 });
 
+function _update_status_tags(frm) {
+  // 1) Construimos un mapa { status: count }
+  const counts = {};
+  (frm.doc.sync_log || []).forEach(r => {
+    counts[r.status] = (counts[r.status] || 0) + 1;
+  });
+
+  // 2) Localizamos todos los tags de status_log
+  const tags = frm.fields_dict.status_log.$wrapper.find(".tag");
+
+  // 3) Para cada tag, sacamos el status_type original
+  tags.each((i, tag) => {
+    const status = frm.doc.status_log[i].status_type;
+    const count  = counts[status] || 0;
+    // 4) Reemplazamos el texto interno del tag
+    $(tag).find(".tag-text").text(`${status} (${count})`);
+  });
+}
+
 frappe.ui.form.on("Company Sync Register", {
 	update_log(frm, cdt, cdn, data) {
 		const row        = locals[cdt][cdn];
@@ -33,56 +52,28 @@ frappe.ui.form.on("Company Sync Register", {
 		});
 	},
 
-	setup(frm) {
-		if (frm.is_new() || !frm._has_shown_log) {
-			frm.toggle_display("section_log", false);
-			frm._has_shown_log = false;
-			frm.set_df_property("company_file", "read_only", 1);
-		}
-	},
-
-	after_save(frm) {
-		//frm.reload_doc();
-		frm.toggle_display("section_log", true);
-	},
-
 	status_log(frm) {
-		frm.toggle_display("section_log", false);
-		frm.fields_dict.sync_log.grid.reset_grid();
-		frm.save();
+		// Se dispara cuando cambian los tags
+		_update_status_tags(frm);
 	},
 
 	onload(frm) {
-		// Mostrar la sección de Log si ya existe
-		if (!frm.is_new() || !frm._has_shown_log) {
-		frm.toggle_display("section_log", true);
-		frm._has_shown_log = true;
-		}
-
-		// Filtros iniciales y acción primaria
-		//frm.trigger("status_log");
 		frm.trigger("update_primary_action");
-		frm.set_df_property("sync_log", "cannot_add_rows", true);
-		frm.set_df_property("sync_log", "cannot_delete_rows", true);
-		frm.set_df_property("sync_log", "allow_bulk_edit", false);
+		//frm.set_df_property("sync_log", "cannot_add_rows", true);
+		//frm.set_df_property("sync_log", "cannot_delete_rows", true);
+		//frm.set_df_property("sync_log", "allow_bulk_edit", true);
+		_update_status_tags(frm);
 	},
 
 	refresh(frm) {
-		// Cada vez que recargue el form
-		//frm.trigger("status_log");
-		if (frm.is_new() || !frm._has_shown_log) {
-			frm.toggle_display("section_log", false);
-			frm._has_shown_log = false;
+		if (!frm.is_new()) {
 			frm.set_df_property("company_file", "read_only", 1);
 		}
 		frm.trigger("update_primary_action");
-		frm.fields_dict.sync_log.grid.toggle_checkboxes(false);
-		frm.fields_dict.sync_log.grid.reset_grid();
+		_update_status_tags(frm);
+		//frm.fields_dict.sync_log.grid.toggle_checkboxes(false);
 	},
 
-	/**
-	 * Habilita / cambia el botón primario según el estado del form
-	 */
 	update_primary_action(frm) {
 		if (frm.is_dirty()) {
 			frm.enable_save();
@@ -103,22 +94,18 @@ frappe.ui.form.on("Company Sync Register", {
 			}
 		} else {
 			frm.set_df_property("csv_file", "read_only", 1);
+			frm.toggle_display("section_log", true);
 		}
 	},
 
-	/**
-	 * Inicia el proceso de sincronización
-	 */
+
 	start_sync(frm) {
-		frm.set_df_property("csv_file", "read_only", 1);
 		frm.call({
 			method: "start_sync",
 			args: { company_sync_register: frm.doc.name },
 			btn: frm.page.btn_primary
 		}).then(r => {
 			if (r.message === true) {
-				frm.save();
-				//frm.reload_doc();
 				frm.disable_save();
 			}
 		});

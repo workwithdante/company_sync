@@ -37,3 +37,6 @@ class CompanySyncLogItem(Document):
 		"""
 		# For now, it does nothing
 		pass
+	
+	def get_count(self):
+		pass

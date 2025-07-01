@@ -54,8 +54,8 @@ class CompanySyncRegister(Document):
 
 			# 4c) Añadimos ese row a sync_log
 			self.append("sync_log", {
-       			#"id":           row["id"],
-                #"idx":           row["idx"],
+       			"id":           row["id"],
+                "idx":           row["idx"],
                 #"log_id": 		row["idx"],
                 "status":       status,
                 "csv":			row["csv"],

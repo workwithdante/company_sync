@@ -85,10 +85,6 @@ class CompanySyncLog(Document):
 		return [d for d in logs[start : start + page_length]]
 
 	@staticmethod
-	def get_count(args):
-		pass
-
-	@staticmethod
 	def get_stats(args):
 		pass
 	
