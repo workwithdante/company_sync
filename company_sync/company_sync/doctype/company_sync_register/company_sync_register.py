@@ -18,45 +18,48 @@ class CompanySyncRegister(Document):
 		company: DF.Data
 		broker: DF.Link
 		csv_file: DF.Attach
-		status_type: DF.TableMultiSelect
-		status_log: DF.Table
-  
-	def before_insert(self):
-		"""Se ejecuta únicamente *antes* de la primera inserción en la BD."""
-		self._populate_status_log()
-
-	def _populate_status_log(self):
-		# 1) Trae todos los tipos con error=1 de golpe
-		error_statuses = set(frappe.get_all(
-			"Company Sync Status Type",
-			filters={"error": 1},
-			pluck="name"
-		))
-
-		# 2) Lleva un set de los que ya añadiste (para no duplicar)
-		existing = set()
-
-		# 3) Recorre UNA vez los logs y añade el hijo la primera vez que ve cada status
-		for row in CompanySyncLog.get_sync_logs(batch_name=self.name):
-			status = row["status"]
-			if status in error_statuses and status not in existing:
-				self.append("status_log", {"status_type": status})
-				existing.add(status)
+		status_log: DF.TableMultiSelect
+		sync_log: DF.Table
 	
 	def onload(self):
-		"""
-		En onload sólo levantamos `sync_log` desde la BD, 
-		y dejamos que el framework muestre los status_log que ya creó before_insert.
-		"""
-		# Arma filtros según lo que el usuario guardó en status_log
-		filters = [d.status_type for d in (self.status_log or [])]
+		filters = []
+		
+		# 1) Trae todas las Status Type que tienen error=1 (sin mirar rows)
+		raw = frappe.get_all(
+			"Company Sync Status Type",
+			filters={"error": 1},
+			fields=["name"]
+		)
 
-		# Consulta los logs (ya no tocamos status_log aquí)
-		rows = CompanySyncLog.get_sync_logs(batch_name=self.name, filters=filters)
+		error_statuses = { d.name for d in raw }
 
-		# Sólo levanta sync_log para el UI
-		self.sync_log = [frappe.get_doc(r) for r in rows]
+		# 2) Prepara el set de los status_type ya añadidos
+		existing = {c.status_type for c in self.status_log}
 
+		# 3) Arranca sync_log vacío
+		self.sync_log = []
+
+		# 4) Recorre rows UNA SOLA VEZ
+		for row in CompanySyncLog.get_sync_logs(batch_name=self.name, filters=filters):
+			status = row["status"]
+
+			if status not in error_statuses | existing:
+				continue
+
+			# 4b) Si es la primera vez que aparece, creamos el child
+			if status not in existing:
+				child = frappe.get_doc({
+					"doctype":     "Company Sync Status Select",
+					"status_type": status,
+					"parent":      self.name,
+					"parentfield": "status_log",
+					"parenttype":  "Company Sync Register"
+				}).insert(ignore_permissions=True)
+				self.status_log.append(child)
+				existing.add(status)
+
+			# 4c) Añadimos ese row a sync_log
+			self.sync_log.append(frappe.get_doc(row))
 
 @frappe.whitelist()
 def start_sync(company_sync_register: str):
@@ -65,6 +68,10 @@ def start_sync(company_sync_register: str):
 	return Syncer(cast(CompanySyncRegister, frappe.get_doc("Company Sync Register", company_sync_register))).worker()
 
 @frappe.whitelist()
-def update_sync_log(sync_on: str, log_id: int, review: str):
+def update_sync_log(sync_on: str, log_id: int, review = None, description = None):
 	sync_on_localtime = datetime.fromisoformat(sync_on)
-	CompanySyncLog.update_sync_log(sync_on_localtime, log_id, review)
+	if review:
+		CompanySyncLog.update_sync_log(sync_on_localtime, log_id, review=review)
+	
+	if description:
+		CompanySyncLog.update_sync_log(sync_on_localtime, log_id, description=description)

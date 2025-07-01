@@ -10,6 +10,7 @@
   "id",
   "status",
   "review",
+  "description",
   "crm",
   "csv"
  ],
@@ -54,13 +55,19 @@
    "fieldtype": "JSON",
    "label": "CSV",
    "read_only": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-06-27 08:38:19.129552",
+ "modified": "2025-06-30 19:03:07.557752",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync Log Item",

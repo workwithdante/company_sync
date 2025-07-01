@@ -9,52 +9,88 @@ frappe.ui.form.on("Company Sync Register", {
 	onload(frm) {
 		const grid = frm.fields_dict.sync_log.grid;
 		const $wrapper = $(grid.control.wrapper);
-		const selector = 'input[data-fieldname="review"]';
+		const selector_review = 'input[data-fieldname="review"]';
+		const selector_description = 'input[data-fieldname="description"]';
+
+		// ————————————————
+		// REVIEW (link)  
+		// awesomplete-selectcomplete o input quedando vacío
+		// ————————————————
+		if (!$wrapper.data("review-listener")) {
+			$wrapper.data("review-listener", true);
+			
+			$wrapper.on("focusout", selector_description, function(e) {
+				const $inp    = $(this);
+				const oldVal  = $inp.data("priorValue") || "";
+				const newVal  = this.value;
+
+				$inp.data("priorDescription", newVal);
+
+				if (newVal === oldVal) return;
+
+				const $row   = $inp.closest(".grid-row");
+				const log_id = parseInt($row.attr("data-idx"), 10);
+				const sync_on = frm.doc.creation;
+
+				// Llamada al método del servidor
+				frm.call({
+					method: "update_sync_log",
+					args: {
+					sync_on: sync_on,
+					log_id:  log_id,
+					description:  newVal
+					}
+				}).then(() => {
+					//frappe.show_alert({message: __("Review saved"), indicator: "green"});
+					//frm.trigger("status_log");
+				});
+			});
+		}
 
 		// Solo una vez instalamos el listener
 		if (!$wrapper.data("listener-added")) {
-		$wrapper.data("listener-added", true);
+			$wrapper.data("listener-added", true);
 
-		$wrapper.on("awesomplete-selectcomplete input", selector, function(e) {
-			const $inp   = $(this);
-			const oldVal = $inp.data("priorValue") || "";
-			const newVal = this.value;
+			$wrapper.on("awesomplete-selectcomplete input", selector_review, function(e) {
+				const $inp   = $(this);
+				const oldVal = $inp.data("priorValue") || "";
+				const newVal = this.value;
 
-			// Guardamos el valor para la próxima comparación
-			$inp.data("priorValue", newVal);
+				// Guardamos el valor para la próxima comparación
+				$inp.data("priorValue", newVal);
 
-			// Si antes y ahora estaban vacíos, no hacemos nada
-			if (oldVal === "" && newVal === "") {
-			return;
-			}
-
-			// Solo cuando realmente cambie, y en los eventos que interesa:
-			if (newVal !== oldVal &&
-				(e.type === "awesomplete-selectcomplete" ||
-				(e.type === "input" && newVal === ""))) {
-
-			// Obtenemos el log_id (está en data-idx)
-			const $row   = $inp.closest(".grid-row");
-			const log_id = parseInt($row.attr("data-idx"), 10);
-			const sync_on = frm.doc.creation; // la creación del padre
-
-			// Llamada al método del servidor
-			frm.call({
-				method: "update_sync_log",
-				args: {
-				sync_on: sync_on,
-				log_id:  log_id,
-				review:  newVal
+				// Si antes y ahora estaban vacíos, no hacemos nada
+				if (oldVal === "" && newVal === "") {
+					return;
 				}
-			}).then(() => {
-				//frappe.show_alert({message: __("Review saved"), indicator: "green"});
-				//frm.trigger("status_log");
-			});
 
-			// También refrescamos el filtro visual inmediatamente
-			//frm.trigger("status_log");
-			}
-		});
+				// Solo cuando realmente cambie, y en los eventos que interesa:
+				if (newVal !== oldVal &&
+					(e.type === "awesomplete-selectcomplete" ||
+					(e.type === "input" && newVal === ""))) {
+
+					// Obtenemos el log_id (está en data-idx)
+					const $row   = $inp.closest(".grid-row");
+					const log_id = parseInt($row.attr("data-idx"), 10);
+					const sync_on = frm.doc.creation; // la creación del padre
+
+					// Llamada al método del servidor
+					frm.call({
+						method: "update_sync_log",
+						args: {
+						sync_on: sync_on,
+						log_id:  log_id,
+						review:  newVal
+						}
+					}).then(() => {
+						//frappe.show_alert({message: __("Review saved"), indicator: "green"});
+						//frm.trigger("status_log");
+					});
+
+					// También refrescamos el filtro visual inmediatamente
+					//frm.trigger("status_log");
+				}
+			});
 		}
 
 		// Mostrar la sección de Log si ya existe

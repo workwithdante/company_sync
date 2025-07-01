@@ -3,6 +3,8 @@
 
 # import frappe
 import json
+import re
+import textwrap
 from typing import Counter, Self
 from company_sync.database.engine import get_engine
 import frappe
@@ -106,8 +108,9 @@ class CompanySyncLog(Document):
 						status,
 						crm_data::text  AS crm_data,
 						csv_data::text  AS csv_data,
-						review
-					FROM company.status_results
+						review,
+						description
+      				FROM company.status_results
 				"""
 				params = {}
 				
@@ -132,8 +135,12 @@ class CompanySyncLog(Document):
 					params["filters"] = tuple(filters)
 					
 				sql += " ORDER BY id"
+    
+				no_whitespace = sql.replace('\n', ' ').replace('\t', ' ')
 
-				results = conn.execute(text(sql), params).fetchall()
+				clean_sql = re.sub(r'\s+', ' ', no_whitespace).strip()
+
+				results = conn.execute(text(clean_sql), params).fetchall()
 				for idx, r in enumerate(results, start=1):
 					crm_json = json.loads(r[4] or "{}")
 					csv_json = json.loads(r[5] or "{}")
@@ -150,6 +157,7 @@ class CompanySyncLog(Document):
 						"creation": r[2],
 						"modified": r[2],
 						"review": r[6] or "",
+						"description": r[7]
 					})
 		else:
 			frappe.throw("No hay conexión a la base de datos externa.")
@@ -158,7 +166,7 @@ class CompanySyncLog(Document):
 
 	@staticmethod
 	@frappe.whitelist()
-	def update_sync_log(sync_on: Datetime, log_id: int, review: str):
+	def update_sync_log(sync_on: Datetime, log_id: int, review = None, description = None):
 		"""
 		Marca todas las filas de status_results cuya batch_name coincide,
 		escribiendo el texto de revisión.
@@ -166,15 +174,26 @@ class CompanySyncLog(Document):
 		if engine := get_engine():
 			# Usamos engine.begin() para commit automático
 			with engine.begin() as conn:
+				sql = "UPDATE company.status_results"
+				params = {"process_date": sync_on, "log_id": log_id}
+    
+				if review and description:
+					return
+    
+				if review:
+					sql += " SET review = :review"
+					params['review'] = review
+     
+				if description:
+					sql += " SET description = :description"
+					params['description'] = description
+
+				sql += " WHERE process_date = :process_date AND id = :log_id"
+     
 				conn.execute(
-					text("""
-						UPDATE company.status_results
-						SET review = :review
-						WHERE process_date = :process_date AND id = :log_id
-					"""),
-					{"process_date": sync_on, "log_id": log_id, "review": review}
+					text(sql),
+					params
 				)
-			print("HEre")
 		else:
 			frappe.throw("No hay conexión a la base de datos externa.")
 		

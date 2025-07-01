@@ -98,7 +98,7 @@ class CompanySyncReviewType(Document):
 		if engine := get_engine():
 			# Usamos engine.begin() para commit automático
 			with engine.begin() as conn:
-				result = conn.execute(
+				conn.execute(
 					text("""
 						UPDATE company.review_type
 						SET error = NULL
