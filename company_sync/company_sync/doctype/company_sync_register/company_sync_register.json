@@ -8,11 +8,13 @@
  "field_order": [
   "company",
   "csv_file",
-  "column_break_khlg",
   "broker",
   "status",
-  "section_log",
+  "column_break_khlg",
   "status_log",
+  "section_break_shmp",
+  "stats",
+  "section_log",
   "sync_log"
  ],
  "fields": [
@@ -69,13 +71,22 @@
    "label": "Status",
    "no_copy": 1,
    "options": "Pending\nSuccess\nPartial Success\nError\nTimed Out"
+  },
+  {
+   "fieldname": "section_break_shmp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "stats",
+   "fieldtype": "HTML",
+   "label": "Stats"
   }
  ],
  "grid_page_length": 50,
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-01 16:00:03.355877",
+ "modified": "2025-07-01 20:41:47.599850",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync Register",

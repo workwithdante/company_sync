@@ -15,25 +15,6 @@ frappe.ui.form.on("Company Sync Log Item", {
   }
 });
 
-function _update_status_tags(frm) {
-  // 1) Construimos un mapa { status: count }
-  const counts = {};
-  (frm.doc.sync_log || []).forEach(r => {
-    counts[r.status] = (counts[r.status] || 0) + 1;
-  });
-
-  // 2) Localizamos todos los tags de status_log
-  const tags = frm.fields_dict.status_log.$wrapper.find(".tag");
-
-  // 3) Para cada tag, sacamos el status_type original
-  tags.each((i, tag) => {
-    const status = frm.doc.status_log[i].status_type;
-    const count  = counts[status] || 0;
-    // 4) Reemplazamos el texto interno del tag
-    $(tag).find(".tag-text").text(`${status} (${count})`);
-  });
-}
-
 frappe.ui.form.on("Company Sync Register", {
 	update_log(frm, cdt, cdn, data) {
 		const row        = locals[cdt][cdn];
@@ -54,7 +35,6 @@ frappe.ui.form.on("Company Sync Register", {
 
 	status_log(frm) {
 		// Se dispara cuando cambian los tags
-		_update_status_tags(frm);
 	},
 
 	onload(frm) {
@@ -62,7 +42,6 @@ frappe.ui.form.on("Company Sync Register", {
 		//frm.set_df_property("sync_log", "cannot_add_rows", true);
 		//frm.set_df_property("sync_log", "cannot_delete_rows", true);
 		//frm.set_df_property("sync_log", "allow_bulk_edit", true);
-		_update_status_tags(frm);
 	},
 
 	refresh(frm) {
@@ -70,8 +49,87 @@ frappe.ui.form.on("Company Sync Register", {
 			frm.set_df_property("company_file", "read_only", 1);
 		}
 		frm.trigger("update_primary_action");
-		_update_status_tags(frm);
+		const labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+		const values = [12, 18, 9, 24];
+		frm.trigger("create_stats");
 		//frm.fields_dict.sync_log.grid.toggle_checkboxes(false);
+	},
+
+	create_stats(frm) {
+		const labels = frm.fields_dict.status_log._rows_list;
+    	//const values = statusLogs.map(row => row.description || 0); // Aquí 'description' es el valor (o usa otro campo)
+
+		// Crear una función para generar abreviaturas
+		const generateAbbreviation = (label) => {
+			// Divide el label en palabras y toma la primera letra de cada una
+			const words = label.split(' ');
+			const abbreviation = words.map(word => word[0].toUpperCase()).join('');
+			return abbreviation;
+		};
+
+		// Aplicar la función de abreviaturas a los labels
+		const abbreviatedLabels = labels.map(label => generateAbbreviation(label));
+
+		const originalLabels = labels
+
+		const syncLogs = frm.doc.sync_log;
+
+		const values = labels.map(label => {
+			// Filtramos los registros de sync_log que tengan el mismo 'status' que el 'label'
+			const count = syncLogs.filter(row => row.status === label).length;
+			return count;  // Aquí calculamos cuántos registros tienen ese status
+		});
+		const totalValues = frm.doc.sync_log.length;
+
+		const totalSyncLog = frappe.get_doc("Company Sync Register", frm.doc_name).get_count()
+
+		frm.get_field('stats').$wrapper.empty()
+			.append('<div id="total-stats" style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Reviewed: ' + totalSyncLog + '</div>')  // Total de registros en sync_log
+			.append('<div id="total-values" style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Detected: ' + totalValues + '</div>')  // Total de los valores
+			.append('<div id="stats-chart"></div>');  // Luego agregar el gráfico
+
+		const colors = [
+			"#000000",  // Negro
+			"#5E2A8C",  // Morado intenso
+			"#9B4D96",  // Morado oscuro
+			"#D5338D",  // Rosado intenso
+			"#C81C7A",  // Rosado profundo
+			"#800080",  // Morado puro
+			"#9B1D40",  // Rosado fuerte
+			"#6200EE",  // Morado eléctrico
+			"#A8A8A8",  // Gris claro
+			"#595959",  // Gris medio oscuro
+			"#333333",  // Gris oscuro
+			"#B10D3A",  // Rosado vibrante
+			"#E40046",  // Rosado brillante
+			"#6A0DAD",  // Morado profundo
+			"#A44D9C",  // Rosado suave y vibrante
+			"#9B30FF",  // Morado eléctrico
+			"#990000",  // Rojo intenso (casi negro)
+			"#404040",  // Gris muy oscuro
+			"#E5A6D1",  // Rosado pálido
+			"#6D4C41",  // Gris madera
+		];
+
+		// Instancia un chart en el div#stats-chart
+		new frappe.Chart("#stats-chart", {
+			title: "Total",
+			data: {
+				labels: labels,
+				datasets: [{ values: values }],
+			},
+			type: 'percentage',
+			colors: colors,
+			height: 220,
+			truncateLegends: 1,  // Truncar leyendas largas si es necesario
+			tooltipOptions: {
+				formatTooltipY: (value) => {
+					// Mostrar solo la abreviatura, sin el label completo
+					const abbreviation = generateAbbreviation(originalLabels[values.indexOf(value)]);
+					return abbreviation + ": " + value;  // Solo muestra la abreviatura y el valor
+				},
+			},
+		});	
 	},
 
 	update_primary_action(frm) {

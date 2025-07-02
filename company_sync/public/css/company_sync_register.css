@@ -5,3 +5,35 @@
 /*[data-fieldname="sync_log"] .grid-heading-row {
   height: 32px;
 }*/
+
+/*[data-fieldname="stats"] .legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 3px;
+  margin-bottom: 10px;
+}
+
+[data-fieldname="stats"] .legend-dot {
+  margin-right: 5px;
+}
+
+[data-fieldname="stats"] .legend-dataset-value {
+  font-size: 12px;
+}
+
+
+[data-fieldname="stats"] .graph-svg-tip {
+  display: none;
+}
+
+
+*/
+
+[data-fieldname="stats"] .legend-dataset-label {
+  display: none;
+}
+
+[data-fieldname="stats"] .title {
+  display: none;
+}

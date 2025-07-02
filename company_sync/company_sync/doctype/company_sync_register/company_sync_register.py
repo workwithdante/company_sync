@@ -64,7 +64,8 @@ class CompanySyncRegister(Document):
                 "description":  row.get("description", ""),
                 "sync_on":      row["sync_on"],
             })
-   
+
+@frappe.whitelist()   
 def start_sync(company_sync_register: str):
 	from typing import cast
 	# Start sync from form
