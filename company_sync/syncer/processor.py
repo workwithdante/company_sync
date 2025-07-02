@@ -18,7 +18,6 @@ class SyncProcessor:
 		if type == 'csv':
 			df = pd.read_csv(csv_site_path)
 		elif type in ('xls', 'xlsx'):
-			csv_site_path = "path_to_your_file_with_password.xlsx"
 			password = "MIAMI123abc!"
 
 			# Generar un nombre aleatorio para el archivo descifrado
