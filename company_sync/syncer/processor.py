@@ -1,3 +1,4 @@
+from zipfile import BadZipFile
 from company_sync.database.engine import get_engine
 import pandas as pd
 import frappe
@@ -18,17 +19,13 @@ class SyncProcessor:
 		if type == 'csv':
 			df = pd.read_csv(csv_site_path)
 		elif type in ('xls', 'xlsx'):
-			password = "MIAMI123abc!"
-
-			# Generar un nombre aleatorio para el archivo descifrado
-			random_name = f"{random.randint(1000, 9999)}.xlsx"
-			decrypted_file_path = os.path.join(os.path.dirname(csv_site_path), random_name)
-
 			try:
 				# Intenta leer el archivo normalmente
 				df = pd.read_excel(csv_site_path, engine='openpyxl')
-			except Exception as e:
-				print(f"Error al leer el archivo con contraseña: {e}")
+			except BadZipFile:
+				password = "MIAMI123abc!"
+				random_name = f"{random.randint(1000, 9999)}.xlsx"
+				decrypted_file_path = os.path.join(os.path.dirname(csv_site_path), random_name)
 				
 				# Si hay un error (probablemente debido a la contraseña), intentamos descifrarlo
 				with open(csv_site_path, "rb") as f:

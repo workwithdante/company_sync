@@ -12,6 +12,8 @@
   "status",
   "column_break_khlg",
   "status_log",
+  "section_sync_preview",
+  "sync_preview",
   "section_stats",
   "stats",
   "section_log",
@@ -81,13 +83,23 @@
    "fieldname": "section_stats",
    "fieldtype": "Section Break",
    "hidden": 1
+  },
+  {
+   "fieldname": "section_sync_preview",
+   "fieldtype": "Section Break",
+   "hidden": 1
+  },
+  {
+   "fieldname": "sync_preview",
+   "fieldtype": "HTML",
+   "label": "Sync Preview"
   }
  ],
  "grid_page_length": 50,
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-02 09:07:18.354945",
+ "modified": "2025-07-02 11:59:10.233058",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync Register",

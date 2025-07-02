@@ -6,7 +6,7 @@ from company_sync.database.unit_of_work import UnitOfWork
 import psycopg2
 import pandas as pd
 from sqlalchemy.orm import sessionmaker
-from company_sync.syncer.utils import update_logs, progress_observer
+from company_sync.syncer.utils import progress_observer
 
 
 class SyncUpdater:
@@ -55,8 +55,6 @@ class SyncUpdater:
         
         if memberID and salesorder_no and status in ('Update'):
             self.update_sales_order(memberID, paidThroughDate, salesorder_no)
-        else:
-            update_logs(self.doc_name, memberID, self.company, self.broker, status)
             
 
     def update_orders(self):
@@ -92,16 +90,35 @@ class SyncUpdater:
                 results = cursor.fetchall()
                 df = pd.DataFrame(results, columns=[desc[0] for desc in cursor.description])
                 
-                total = cursor.rowcount
-                #for i, (_, row) in enumerate(tqdm(df.iterrows(), total=len(df), desc="Validando Órdenes de Venta 2..."), start=1):
-                #    self.process_order(row)
-                    # Calcula el progreso en porcentaje
-                #    progress = float(i / total)
-                    # Guarda el progreso en caché
-                #    progress_observer.update(progress, {'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'}, event='company_sync_refresh', after_commit=False)
-                
-                progress_observer.updateSuccess({'success': True, 'doc_name': self.doc_name, 'doctype': 'Company Sync Scheduler'}, event='company_sync_success', after_commit=False)
+                df = df[df['status'] == 'Update']
 
+                # Ahora, df solo contiene las filas con status == 'Update'
+                total = df.shape[0] 
+                for i, (_, row) in enumerate(df.iterrows(), start=1):
+                    self.process_order(row)
+                    # Calcula el progreso en porcentaje
+                    progress = float(i / total)
+                    # Guarda el progreso en caché
+                    frappe.publish_realtime(
+                        'company_sync_refresh',
+                        {
+                            'percentage': f"{progress * 100:.2f}",
+                        },
+                        doctype='Company Sync Register',
+                        docname=self.doc_name,
+                        after_commit=False,
+                    )
+                
+                frappe.publish_realtime(
+                    'company_sync_success',
+                    {
+                        'success': True,
+                    },
+                    doctype='Company Sync Register',
+                    docname=self.doc_name,
+                    after_commit=False,
+                )
+    
                 cursor.close()
                 conn.commit()
             except Exception as e:
