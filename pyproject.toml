@@ -18,7 +18,8 @@ dependencies = [
     "tzdata ~= 2024.1",
     "python-dotenv ~= 1.0.1",
     "sqlalchemy ~= 2.0.37",
-    "psycopg2-binary ~= 2.9.10"
+    "psycopg2-binary ~= 2.9.10",
+    "msoffcrypto-tool ~= 5.0.0"
 ]
 
 [build-system]

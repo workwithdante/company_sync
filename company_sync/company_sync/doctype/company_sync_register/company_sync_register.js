@@ -81,13 +81,6 @@ frappe.ui.form.on("Company Sync Register", {
 		});
 		const totalValues = frm.doc.sync_log.length;
 
-		const totalSyncLog = frappe.get_doc("Company Sync Register", frm.doc_name).get_count()
-
-		frm.get_field('stats').$wrapper.empty()
-			.append('<div id="total-stats" style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Reviewed: ' + totalSyncLog + '</div>')  // Total de registros en sync_log
-			.append('<div id="total-values" style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Detected: ' + totalValues + '</div>')  // Total de los valores
-			.append('<div id="stats-chart"></div>');  // Luego agregar el gráfico
-
 		const colors = [
 			"#000000",  // Negro
 			"#5E2A8C",  // Morado intenso
@@ -111,25 +104,34 @@ frappe.ui.form.on("Company Sync Register", {
 			"#6D4C41",  // Gris madera
 		];
 
-		// Instancia un chart en el div#stats-chart
-		new frappe.Chart("#stats-chart", {
-			title: "Total",
-			data: {
-				labels: labels,
-				datasets: [{ values: values }],
-			},
-			type: 'percentage',
-			colors: colors,
-			height: 220,
-			truncateLegends: 1,  // Truncar leyendas largas si es necesario
-			tooltipOptions: {
-				formatTooltipY: (value) => {
-					// Mostrar solo la abreviatura, sin el label completo
-					const abbreviation = generateAbbreviation(originalLabels[values.indexOf(value)]);
-					return abbreviation + ": " + value;  // Solo muestra la abreviatura y el valor
+		frm.call({
+			method: "get_count_logs",
+			args: { batch_name: frm.docname },
+		}).then(r => {
+			frm.get_field('stats').$wrapper.empty()
+				.append('<div id="total-stats" style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Reviewed: ' + r.message + '</div>')  // Total de registros en sync_log
+				.append('<div id="total-values" style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Detected: ' + totalValues + '</div>')  // Total de los valores
+				.append('<div id="stats-chart"></div>');  // Luego agregar el gráfico
+
+			new frappe.Chart("#stats-chart", {
+				title: "Total",
+				data: {
+					labels: labels,
+					datasets: [{ values: values }],
 				},
-			},
-		});	
+				type: 'percentage',
+				colors: colors,
+				height: 220,
+				truncateLegends: 1,  // Truncar leyendas largas si es necesario
+				tooltipOptions: {
+					formatTooltipY: (value) => {
+						// Mostrar solo la abreviatura, sin el label completo
+						const abbreviation = generateAbbreviation(originalLabels[values.indexOf(value)]);
+						return abbreviation + ": " + value;  // Solo muestra la abreviatura y el valor
+					},
+				},
+			});	
+		});
 	},
 
 	update_primary_action(frm) {
@@ -153,6 +155,7 @@ frappe.ui.form.on("Company Sync Register", {
 		} else {
 			frm.set_df_property("csv_file", "read_only", 1);
 			frm.toggle_display("section_log", true);
+			frm.toggle_display("section_stats", true);
 		}
 	},
 

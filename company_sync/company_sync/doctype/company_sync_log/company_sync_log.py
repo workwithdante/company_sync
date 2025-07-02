@@ -89,6 +89,10 @@ class CompanySyncLog(Document):
 		pass
 	
 	@staticmethod
+	def get_count(args):
+		return len(CompanySyncLog.get_list(args))
+
+	@staticmethod
 	def get_sync_logs(batch_name=None, process_date=None, log_id=None, log_name=None, filters=[], *args, **kwargs):
 		rows = []
 		if engine := get_engine():

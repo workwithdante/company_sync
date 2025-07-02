@@ -79,3 +79,8 @@ def update_sync_log(sync_on: str, log_id: int, review = None, description = None
 	
 	if description is not None:
 		CompanySyncLog.update_sync_log(sync_on_localtime, log_id, description=description)
+
+@frappe.whitelist()
+def get_count_logs(batch_name: str):
+    rows = CompanySyncLog.get_list({ "filters": {"batch_name": batch_name}, "as_list": True })
+    return len(rows)

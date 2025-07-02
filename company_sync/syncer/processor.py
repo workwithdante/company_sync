@@ -3,6 +3,9 @@ import pandas as pd
 import frappe
 from frappe import _
 from sqlalchemy import text
+import msoffcrypto
+import random
+import os
 
 class SyncProcessor:
 	def __init__(self, csv_path: str, db_name):
@@ -11,7 +14,35 @@ class SyncProcessor:
 	
 	def read_csv(self) -> pd.DataFrame:
 		csv_site_path = frappe.get_site_path(self.csv_path.lstrip('/'))
-		df = pd.read_csv(csv_site_path)
+		[type] = csv_site_path.split('.')[-1:]
+		if type == 'csv':
+			df = pd.read_csv(csv_site_path)
+		elif type in ('xls', 'xlsx'):
+			csv_site_path = "path_to_your_file_with_password.xlsx"
+			password = "MIAMI123abc!"
+
+			# Generar un nombre aleatorio para el archivo descifrado
+			random_name = f"{random.randint(1000, 9999)}.xlsx"
+			decrypted_file_path = os.path.join(os.path.dirname(csv_site_path), random_name)
+
+			try:
+				# Intenta leer el archivo normalmente
+				df = pd.read_excel(csv_site_path, engine='openpyxl')
+			except Exception as e:
+				print(f"Error al leer el archivo con contraseña: {e}")
+				
+				# Si hay un error (probablemente debido a la contraseña), intentamos descifrarlo
+				with open(csv_site_path, "rb") as f:
+					file = msoffcrypto.OfficeFile(f)
+					file.load_key(password=password)  # Cargar la contraseña
+					with open(decrypted_file_path, "wb") as decrypted_file:
+						file.decrypt(decrypted_file)  # Desbloquear el archivo
+
+				# Ahora lee el archivo descifrado
+				df = pd.read_excel(decrypted_file_path, engine='openpyxl')
+
+		else:
+			df = pd.DataFrame([])
 		
 		if df.empty:
 			frappe.logger().info("CSV file is empty or not found at %s", csv_site_path)

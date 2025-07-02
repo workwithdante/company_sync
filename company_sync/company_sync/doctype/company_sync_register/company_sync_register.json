@@ -7,12 +7,12 @@
  "engine": "InnoDB",
  "field_order": [
   "company",
-  "csv_file",
   "broker",
+  "csv_file",
   "status",
   "column_break_khlg",
   "status_log",
-  "section_break_shmp",
+  "section_stats",
   "stats",
   "section_log",
   "sync_log"
@@ -73,20 +73,21 @@
    "options": "Pending\nSuccess\nPartial Success\nError\nTimed Out"
   },
   {
-   "fieldname": "section_break_shmp",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "stats",
    "fieldtype": "HTML",
    "label": "Stats"
+  },
+  {
+   "fieldname": "section_stats",
+   "fieldtype": "Section Break",
+   "hidden": 1
   }
  ],
  "grid_page_length": 50,
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-01 20:41:47.599850",
+ "modified": "2025-07-02 09:07:18.354945",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync Register",
