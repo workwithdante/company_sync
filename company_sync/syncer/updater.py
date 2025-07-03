@@ -22,7 +22,7 @@ class SyncUpdater:
             salesOrderData = {}
             
             def getSOAllData(salesorder_no, memberID):
-                query_sales = f"SELECT * FROM SalesOrder WHERE salesorder_no = '{salesorder_no}' AND cf_2119 = '{memberID}' LIMIT 1;"
+                query_sales = f"SELECT * FROM SalesOrder WHERE salesorder_no = '{salesorder_no}' AND cf_2119 LIKE '{memberID}%' LIMIT 1;"
                 salesOrderData = self.vtiger_client.doQuery(query_sales)
                 return salesOrderData
             
@@ -108,16 +108,6 @@ class SyncUpdater:
                         docname=self.doc_name,
                         after_commit=False,
                     )
-                
-                frappe.publish_realtime(
-                    'company_sync_success',
-                    {
-                        'success': True,
-                    },
-                    doctype='Company Sync Register',
-                    docname=self.doc_name,
-                    after_commit=False,
-                )
     
                 cursor.close()
                 conn.commit()
@@ -127,3 +117,12 @@ class SyncUpdater:
                 raise
             finally:
                 conn.close()
+                frappe.publish_realtime(
+                    'company_sync_success',
+                    {
+                        'success': True,
+                    },
+                    doctype='Company Sync Register',
+                    docname=self.doc_name,
+                    after_commit=False,
+                )

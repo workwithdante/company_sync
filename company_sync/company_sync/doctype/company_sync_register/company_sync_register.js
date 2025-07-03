@@ -28,13 +28,9 @@ frappe.ui.form.on("Company Sync Register", {
 			}
 		})
 		frappe.realtime.on("company_sync_success", ({ success }) => {		
-			if (!frm._has_shown_sync_log_preview) {
-				frm.toggle_display("section_sync_preview", true);
-				frm.page.clear_primary_action();
-				frm._has_shown_sync_log_preview = true;
-			}
-			successProgressBar(frm);
-			frm.refresh()
+			frm.toggle_display("section_sync_preview", false);
+			//successProgressBar(frm);
+			frm.reload_doc();
 		})
 	},
 
@@ -57,6 +53,7 @@ frappe.ui.form.on("Company Sync Register", {
 
 	onload(frm) {
 		frm.trigger("update_primary_action");
+		frm.trigger("create_stats");
 		//frm.set_df_property("sync_log", "cannot_add_rows", true);
 		//frm.set_df_property("sync_log", "cannot_delete_rows", true);
 		//frm.set_df_property("sync_log", "allow_bulk_edit", true);
@@ -81,14 +78,16 @@ frappe.ui.form.on("Company Sync Register", {
 		const generateAbbreviation = (label) => {
 			// Divide el label en palabras y toma la primera letra de cada una
 			const words = label.split(' ');
-			const abbreviation = words.map(word => word[0].toUpperCase()).join('');
-			return abbreviation;
+			if (words.length > 1) {
+				const abbreviation = words.map(word => word[0].toUpperCase()).join('');
+				return abbreviation;
+			}
+			
+			return words[0];
 		};
 
 		// Aplicar la función de abreviaturas a los labels
 		const abbreviatedLabels = labels.map(label => generateAbbreviation(label));
-
-		const originalLabels = labels
 
 		const syncLogs = frm.doc.sync_log;
 
@@ -97,7 +96,7 @@ frappe.ui.form.on("Company Sync Register", {
 			const count = syncLogs.filter(row => row.status === label).length;
 			return count;  // Aquí calculamos cuántos registros tienen ese status
 		});
-		const totalValues = frm.doc.sync_log.length;
+		const totalDetected = syncLogs.length;
 
 		const colors = [
 			"#000000",  // Negro
@@ -126,11 +125,14 @@ frappe.ui.form.on("Company Sync Register", {
 			method: "get_count_logs",
 			args: { batch_name: frm.docname },
 		}).then(r => {
+			//const totalUpdated = syncLogs.filter(row => row.status === 'Update').length;
 			frm.get_field('stats').$wrapper.empty()
-				.append('<div id="total-stats" style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Reviewed: ' + r.message + '</div>')  // Total de registros en sync_log
-				.append('<div id="total-values" style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Detected: ' + totalValues + '</div>')  // Total de los valores
+				.append('<div id="total-review" style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Reviewed: ' + r.message + '</div>')  // Total de registros en sync_log
+				.append('<div id="total-detected" style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Detected: ' + totalDetected + '</div>')  // Total de los valores
+				//.append('<div id="total-updated" style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Updated: ' + totalUpdated + '</div>')  // Total de los valores
 				.append('<div id="stats-chart"></div>');  // Luego agregar el gráfico
-
+			
+			let index = 0;
 			new frappe.Chart("#stats-chart", {
 				title: "Total",
 				data: {
@@ -141,10 +143,15 @@ frappe.ui.form.on("Company Sync Register", {
 				colors: colors,
 				height: 220,
 				truncateLegends: 1,  // Truncar leyendas largas si es necesario
+				percentageOptions: {
+					stacked: 1,
+				},
 				tooltipOptions: {
 					formatTooltipY: (value) => {
 						// Mostrar solo la abreviatura, sin el label completo
-						const abbreviation = generateAbbreviation(originalLabels[values.indexOf(value)]);
+						if (index == abbreviatedLabels.length) index = 0;
+						const abbreviation = abbreviatedLabels[index];
+						index += 1;
 						return abbreviation + ": " + value;  // Solo muestra la abreviatura y el valor
 					},
 				},
@@ -174,6 +181,7 @@ frappe.ui.form.on("Company Sync Register", {
 			frm.set_df_property("csv_file", "read_only", 1);
 			frm.toggle_display("section_log", true);
 			frm.toggle_display("section_stats", true);
+			frm.toggle_display("status_log", true);
 		}
 	},
 
