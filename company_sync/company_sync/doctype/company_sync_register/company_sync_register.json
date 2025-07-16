@@ -32,7 +32,7 @@
   {
    "fieldname": "csv_file",
    "fieldtype": "Attach",
-   "label": "CSV File",
+   "label": "Data File",
    "reqd": 1
   },
   {
@@ -99,7 +99,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-02 11:59:10.233058",
+ "modified": "2025-07-15 20:11:55.608194",
  "modified_by": "Administrator",
  "module": "Company Sync",
  "name": "Company Sync Register",
