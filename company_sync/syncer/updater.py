@@ -53,7 +53,7 @@ class SyncUpdater:
         
         salesorder_no = json_crm.get('so_no')
         
-        if memberID and salesorder_no and status in ('Update'):
+        if memberID and salesorder_no and status.startswith('Update'):
             self.update_sales_order(memberID, paidThroughDate, salesorder_no)
             
 
