@@ -90,7 +90,7 @@ class CompanySyncStatusType(Document):
 					SELECT
 						name,
 						error
-					FROM company.status_type
+					FROM config.status_type
 				"""
 				params = {}
 					
@@ -131,7 +131,7 @@ class CompanySyncStatusType(Document):
 			with engine.begin() as conn:
 				result = conn.execute(
 					text("""
-						UPDATE company.status_type
+						UPDATE config.status_type
 						SET error = NULL
 						WHERE name = :name
 					"""),

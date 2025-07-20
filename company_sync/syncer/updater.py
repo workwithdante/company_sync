@@ -68,21 +68,21 @@ class SyncUpdater:
                 
                 
                 try:
-                    cursor.callproc("company.get_status_by", (self.company, self.broker, self.doc_name, process_date))
+                    cursor.callproc("callers.get_status_by", (self.company, self.broker, self.doc_name, process_date))
                 except psycopg2.Error as e:
                     frappe.logger().error(
-                        f"Error calling stored procedure 'company.get_status_by' "
+                        f"Error calling stored procedure 'callers.get_status_by' "
                         f"with args (company={self.company}, broker={self.broker}, doc_name={self.doc_name}, process_date={process_date}):\n"
                         f"{type(e).__name__}: {e.pgerror or e}")
                     
                     frappe.throw(
-                        _("Error calling stored procedure 'company.get_status_by'. Please check the logs for more details."),
+                        _("Error calling stored procedure 'callers.get_status_by'. Please check the logs for more details."),
                         title=_("Database Error"))
                     # Log the error using frappe logger
                     raise e
                 except Exception as e:
                     frappe.throw(
-                        _("An unexpected error occurred while calling the stored procedure 'company.get_status_by'. Please check the logs for more details."),
+                        _("An unexpected error occurred while calling the stored procedure 'callers.get_status_by'. Please check the logs for more details."),
                         title=_("Unexpected Error"))
                     raise e from e
 

@@ -110,7 +110,7 @@ class CompanySyncLog(Document):
 						csv_data::text  AS csv_data,
 						review,
 						description
-      				FROM company.status_results
+      				FROM config.status_results
 				"""
 				params = {}
 				
@@ -174,7 +174,7 @@ class CompanySyncLog(Document):
 		if engine := get_engine():
 			# Usamos engine.begin() para commit automático
 			with engine.begin() as conn:
-				sql = "UPDATE company.status_results"
+				sql = "UPDATE config.status_results"
 				params = {"process_date": sync_on, "log_id": log_id}
     
 				if review is not None and description is not None:

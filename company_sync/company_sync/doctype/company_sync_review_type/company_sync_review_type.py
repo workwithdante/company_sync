@@ -62,7 +62,7 @@ class CompanySyncReviewType(Document):
 					SELECT
 						name,
 						error
-					FROM company.review_type
+					FROM config.review_type
 				"""
 				params = {}
 					
@@ -100,7 +100,7 @@ class CompanySyncReviewType(Document):
 			with engine.begin() as conn:
 				conn.execute(
 					text("""
-						UPDATE company.review_type
+						UPDATE config.review_type
 						SET error = NULL
 						WHERE name = :name
 					"""),
