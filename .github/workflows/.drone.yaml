@@ -1,0 +1,76 @@
+kind: pipeline
+type: docker
+name: build-and-deploy
+
+trigger:
+  event:
+    - push
+  branch:
+    - main
+
+steps:
+  - name: validate commit message
+    image: alpine/git
+    commands:
+      - export COMMIT_MSG=$(git log -1 --pretty=%s)
+      - echo "Último commit: $COMMIT_MSG"
+      - |
+        if [[ ! "$COMMIT_MSG" =~ ^(feat:|fix:|docs:|hot:|refactor:|test:|ci:|BREAKING\ CHANGE) ]]; then
+          echo "Commit no válido, saltando..."
+          exit 78  # Exit code 78 = skip remaining steps
+        fi
+
+  - name: calculate tag
+    image: alpine
+    environment:
+      TAG_FILE: /tmp/tag.txt
+    commands:
+      - apk add --no-cache curl jq bash
+      - export COMMIT_MSG=$(git log -1 --pretty=%s)
+      - export TAGS_JSON=$(curl -s "https://hub.docker.com/v2/repositories/dantedevenir/sierra-group/tags?page_size=100")
+      - export LATEST=$(echo "$TAGS_JSON" | jq -r '.results[].name' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1 || echo "0.0.0.0")
+      - echo "Último tag: $LATEST"
+      - IFS='.' read -r MAJOR MINOR PATCH REVISION <<< "$LATEST"
+      - |
+        case "$COMMIT_MSG" in
+          *BREAKING\ CHANGE*) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0; REVISION=0 ;;
+          feat:*) MINOR=$((MINOR+1)); PATCH=0; REVISION=0 ;;
+          fix:*|hot:*) PATCH=$((PATCH+1)); REVISION=0 ;;
+          refactor:*|docs:*|test:*|ci:*|chore:*) REVISION=$((REVISION+1)) ;;
+        esac
+      - export FULL_TAG="${MAJOR}.${MINOR}.${PATCH}.${REVISION}"
+      - echo $FULL_TAG > $TAG_FILE
+      - echo "FULL_TAG=$FULL_TAG" >> $DRONE_ENV
+
+  - name: docker build & push
+    image: plugins/docker
+    settings:
+      repo: dantedevenir/sierra-group
+      tags:
+        - ${FULL_TAG}
+      username:
+        from_secret: REGISTRY_USER
+      password:
+        from_secret: REGISTRY_PASS
+      dockerfile: frappe_docker/images/layered/Containerfile
+      context: .
+      build_args:
+        - FRAPPE_PATH=https://github.com/frappe/frappe
+        - FRAPPE_BRANCH=version-15
+        - APPS_JSON_BASE64=${APPS_JSON_BASE64}
+
+  - name: update values.yaml in argocd repo
+    image: appleboy/git-push-action
+    settings:
+      username: github-actions[bot]
+      email: github-actions[bot]@users.noreply.github.com
+      branch: main
+      remote: https://github.com/sierra-group/argocd-app.git
+      token:
+        from_secret: GITOPS_PAT
+      commit: Update Docker image tag to ${FULL_TAG}
+      clean: false
+      force: false
+      directory: argocd-app
+      commands:
+        - sed -i "s|^\([[:space:]]*tag:[[:space:]]*\).*|\1${FULL_TAG}|" apps/sierra-group/values.yaml
