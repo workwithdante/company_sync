@@ -13,33 +13,35 @@ steps:
     image: alpine/git
     commands:
       - export COMMIT_MSG=$(git log -1 --pretty=%s)
-      - "echo 'Último commit: $COMMIT_MSG'"
       - |
-        if [[ ! "$COMMIT_MSG" =~ ^(feat:|fix:|docs:|hot:|refactor:|test:|ci:|BREAKING\ CHANGE) ]]; then
+        echo "Último commit: $COMMIT_MSG"
+        echo "$COMMIT_MSG" | grep -Eq '^(feat:|fix:|docs:|hot:|refactor:|test:|ci:|BREAKING CHANGE)' || {
           echo "Commit no válido, saltando..."
-          exit 78  # Exit code 78 = skip remaining steps
-        fi
+          exit 78
+        }
 
   - name: calculate tag
     image: alpine
     environment:
       TAG_FILE: /tmp/tag.txt
     commands:
-      - apk add --no-cache curl jq bash
+      - apk add --no-cache curl jq
       - export COMMIT_MSG=$(git log -1 --pretty=%s)
       - export TAGS_JSON=$(curl -s "https://hub.docker.com/v2/repositories/dantedevenir/sierra-group/tags?page_size=100")
       - export LATEST=$(echo "$TAGS_JSON" | jq -r '.results[].name' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1 || echo "0.0.0.0")
-      - "echo 'Último tag: $LATEST'"
-      - IFS='.' read -r MAJOR MINOR PATCH REVISION <<< "$LATEST"
       - |
-        case "$COMMIT_MSG" in
+        echo "Último tag: $LATEST"
+      - IFS='.' read -r MAJOR MINOR PATCH REVISION <<EOF
+        $LATEST
+        EOF
+      - case "$COMMIT_MSG" in
           *BREAKING\ CHANGE*) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0; REVISION=0 ;;
           feat:*) MINOR=$((MINOR+1)); PATCH=0; REVISION=0 ;;
           fix:*|hot:*) PATCH=$((PATCH+1)); REVISION=0 ;;
           refactor:*|docs:*|test:*|ci:*|chore:*) REVISION=$((REVISION+1)) ;;
         esac
-      - export FULL_TAG="${MAJOR}.${MINOR}.${PATCH}.${REVISION}"
-      - echo $FULL_TAG > $TAG_FILE
+      - FULL_TAG="${MAJOR}.${MINOR}.${PATCH}.${REVISION}"
+      - echo "$FULL_TAG" > $TAG_FILE
       - echo "FULL_TAG=$FULL_TAG" >> $DRONE_ENV
 
   - name: docker build & push
