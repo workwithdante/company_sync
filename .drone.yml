@@ -44,6 +44,36 @@ steps:
       - echo "$FULL_TAG" > $TAG_FILE
       - echo "FULL_TAG=$FULL_TAG" >> $DRONE_ENV
   
+  - name: generate apps.json
+    image: alpine
+    environment:
+      APPS_JSON_PATH: /tmp/apps.json
+      PRIVATE_REPO_PAT:
+        from_secret: PRIVATE_REPO_PAT
+    commands:
+      - apk add --no-cache jq
+      - REPO_URL_WITH_PAT=$(echo "$DRONE_GIT_HTTP_URL" | sed "s#https://#https://${PRIVATE_REPO_PAT}@#")
+      - |
+        cat <<EOF > $APPS_JSON_PATH
+        [
+          {
+            "url": "https://github.com/frappe/erpnext",
+            "branch": "version-15"
+          },
+          {
+            "url": "https://github.com/frappe/payments",
+            "branch": "version-15"
+          },
+          {
+            "url": "$REPO_URL_WITH_PAT",
+            "branch": "${DRONE_BRANCH}"
+          }
+        ]
+        EOF
+      - cat $APPS_JSON_PATH | jq .
+      - export APPS_JSON_BASE64=$(base64 -w 0 $APPS_JSON_PATH)
+      - echo "APPS_JSON_BASE64=$APPS_JSON_BASE64" >> $DRONE_ENV
+
   - name: clone frappe_docker
     image: alpine/git
     commands:
