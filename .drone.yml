@@ -9,10 +9,17 @@ trigger:
     - main
 
 steps:
+  - name: prepare
+    image: alpine/git
+    commands:
+      - git fetch --tags
+      - export COMMIT_MSG=$(git log -1 --pretty=%s)
+      - echo "$COMMIT_MSG" > /tmp/commit.txt
+
   - name: validate commit message
     image: alpine/git
     commands:
-      - export COMMIT_MSG=$(git log -1 --pretty=%s)
+      - COMMIT_MSG=$(cat /tmp/commit.txt)
       - |
         echo "Último commit: $COMMIT_MSG"
         echo "$COMMIT_MSG" | grep -Eq '^(feat:|fix:|docs:|hot:|refactor:|test:|ci:|BREAKING CHANGE)' || {
@@ -26,8 +33,7 @@ steps:
       TAG_FILE: /tmp/tag.txt
     commands:
       - apk add --no-cache curl jq
-      - export COMMIT_MSG=$(git log -1 --pretty=%s)
-      - export TAGS_JSON=$(curl -s "https://hub.docker.com/v2/repositories/dantedevenir/sierra-group/tags?page_size=100")
+      - export TAGS_JSON=$(curl -s -u REGISTRY_USER:REGISTRY_PASS "https://gitea-test.mabecenter.org/v2/sierra-group/erpnext/tags/list")
       - export LATEST=$(echo "$TAGS_JSON" | jq -r '.results[].name' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1 || echo "0.0.0.0")
       - |
         echo "Último tag: $LATEST"
@@ -43,36 +49,26 @@ steps:
       - FULL_TAG="${MAJOR}.${MINOR}.${PATCH}.${REVISION}"
       - echo "$FULL_TAG" > $TAG_FILE
       - echo "FULL_TAG=$FULL_TAG" >> $DRONE_ENV
+  
+  - name: clone frappe_docker
+    image: alpine/git
+    commands:
+      - git clone --depth 1 https://github.com/frappe/frappe_docker.git
 
   - name: docker build & push
     image: plugins/docker
     settings:
-      repo: dantedevenir/sierra-group
-      tags:
-        - ${FULL_TAG}
+      repo: gitea-test.mabecenter.org/sierra-group/erpnext
+      registry: gitea-test.mabecenter.org
       username:
         from_secret: REGISTRY_USER
       password:
         from_secret: REGISTRY_PASS
       dockerfile: frappe_docker/images/layered/Containerfile
       context: .
+      tags:
+        - ${FULL_TAG}
       build_args:
         - FRAPPE_PATH=https://github.com/frappe/frappe
         - FRAPPE_BRANCH=version-15
         - APPS_JSON_BASE64=${APPS_JSON_BASE64}
-
-  - name: update values.yaml in argocd repo
-    image: appleboy/git-push-action
-    settings:
-      username: github-actions[bot]
-      email: github-actions[bot]@users.noreply.github.com
-      branch: main
-      remote: https://github.com/sierra-group/argocd-app.git
-      token:
-        from_secret: GITOPS_PAT
-      commit: Update Docker image tag to ${FULL_TAG}
-      clean: false
-      force: false
-      directory: argocd-app
-      commands:
-        - sed -i "s|^\([[:space:]]*tag:[[:space:]]*\).*|\1${FULL_TAG}|" apps/sierra-group/values.yaml
