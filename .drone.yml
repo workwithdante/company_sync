@@ -71,8 +71,7 @@ steps:
         ]
         EOF
       - cat $APPS_JSON_PATH | jq .
-      - export APPS_JSON_BASE64=$(base64 -w 0 $APPS_JSON_PATH)
-      - echo "APPS_JSON_BASE64=$APPS_JSON_BASE64" >> $DRONE_ENV
+      - base64 -w 0 $APPS_JSON_PATH > /tmp/apps_base64.txt
 
   - name: clone frappe_docker
     image: alpine/git
@@ -81,6 +80,11 @@ steps:
 
   - name: docker build & push
     image: plugins/docker
+    environment:
+      APPS_JSON_BASE64:
+        from_secret: PLACEHOLDER_IF_REQUIRED  # dummy
+    commands:
+      - export APPS_JSON_BASE64=$(cat /tmp/apps_base64.txt)
     settings:
       repo: gitea-test.mabecenter.org/sierra-group/erpnext
       registry: gitea-test.mabecenter.org
@@ -96,4 +100,3 @@ steps:
         - FRAPPE_PATH=https://github.com/frappe/frappe
         - FRAPPE_BRANCH=version-15
         - APPS_JSON_BASE64=${APPS_JSON_BASE64}
-        
