@@ -13,7 +13,7 @@ steps:
     image: alpine/git
     commands:
       - export COMMIT_MSG=$(git log -1 --pretty=%s)
-      - echo "Último commit: $COMMIT_MSG"
+      - "echo 'Último commit: $COMMIT_MSG'"
       - |
         if [[ ! "$COMMIT_MSG" =~ ^(feat:|fix:|docs:|hot:|refactor:|test:|ci:|BREAKING\ CHANGE) ]]; then
           echo "Commit no válido, saltando..."
@@ -29,7 +29,7 @@ steps:
       - export COMMIT_MSG=$(git log -1 --pretty=%s)
       - export TAGS_JSON=$(curl -s "https://hub.docker.com/v2/repositories/dantedevenir/sierra-group/tags?page_size=100")
       - export LATEST=$(echo "$TAGS_JSON" | jq -r '.results[].name' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1 || echo "0.0.0.0")
-      - echo "Último tag: $LATEST"
+      - "echo 'Último tag: $LATEST'"
       - IFS='.' read -r MAJOR MINOR PATCH REVISION <<< "$LATEST"
       - |
         case "$COMMIT_MSG" in
