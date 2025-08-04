@@ -14,12 +14,6 @@ steps:
     commands:
       - git fetch --tags
       - export COMMIT_MSG=$(git log -1 --pretty=%s)
-      - echo "$COMMIT_MSG" > /tmp/commit.txt
-
-  - name: validate commit message
-    image: alpine/git
-    commands:
-      - COMMIT_MSG=$(cat /tmp/commit.txt)
       - |
         echo "Último commit: $COMMIT_MSG"
         echo "$COMMIT_MSG" | grep -Eq '^(feat:|fix:|docs:|hot:|refactor:|test:|ci:|BREAKING CHANGE)' || {
