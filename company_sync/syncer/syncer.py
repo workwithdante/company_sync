@@ -40,7 +40,7 @@ class Syncer:
 					event="company_sync_register",
 					job_id=self.job_id,
 					company_sync_register=self.register.name,
-					now=True,
+					now=False,
 				)
 				return True
 			else:
