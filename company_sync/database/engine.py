@@ -4,6 +4,39 @@ import frappe
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 
+# company_sync/database/engine.py
+from psycopg import connect
+from psycopg import Connection as PGConnection
+from psycopg.rows import dict_row
+import os
+
+PG_DSN = os.getenv("PG_DSN", "postgresql://user:pass@host:5432/dbname")
+
+def get_pg_conn() -> PGConnection:
+    """
+    Devuelve SIEMPRE una conexión psycopg v3 válida.
+    Lanza excepción si no puede conectar (no retorna None).
+    """
+    conf = frappe.get_doc("Company Sync Settings")
+    db_user = conf.user
+    db_password = conf.get_password("password")
+    db_host = conf.host
+    db_port = conf.port
+    db_name = conf.name_db
+    db_type = str(conf.type).lower()
+    db_conn = str(conf.connector).lower()
+
+    # Construir la cadena de conexión MySQL
+    if all([db_user, db_password, db_host, db_port, db_name]):
+        connection_string = f"{db_type}+{db_conn}://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+    else:
+        frappe.logger().error("Faltan detalles de conexión para VTigerCRM.")
+        connection_string = None
+
+    # Crear el motor de SQLAlchemy con configuraciones de pooling
+    if connection_string:
+        return connect(connection_string, row_factory=dict_row)
+
 def get_engine():
     """
     Crea y devuelve un motor de SQLAlchemy basado en la configuración de Frappe.
